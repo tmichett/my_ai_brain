@@ -1,0 +1,12 @@
+{
+  "_comment": "Place this at ~/.cursor/hooks.json for automatic backup on session end",
+  "version": 1,
+  "hooks": {
+    "sessionEnd": [
+      {
+        "command": "hooks/open-brain-backup.sh",
+        "timeout": 30
+      }
+    ]
+  }
+}

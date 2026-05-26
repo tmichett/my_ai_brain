@@ -1,0 +1,13 @@
+{
+  "_comment": "Add this entry to ~/.cursor/mcp.json under mcpServers",
+  "open-brain": {
+    "command": "npx",
+    "args": ["tsx", "<PATH_TO_REPO>/mcp-server/src/index.ts"],
+    "env": {
+      "SUPABASE_URL": "http://127.0.0.1:54321",
+      "SUPABASE_SERVICE_ROLE_KEY": "<YOUR_SERVICE_ROLE_KEY>",
+      "OLLAMA_URL": "http://127.0.0.1:11434",
+      "OLLAMA_EMBED_MODEL": "nomic-embed-text"
+    }
+  }
+}
