@@ -1,10 +1,16 @@
 {
-  "_comment": "Place this at ~/.cursor/hooks.json for automatic backup on session end",
+  "_comment": "Merge into ~/.cursor/hooks.json. Symlink hook scripts from my_ai_brain/scripts/ or use absolute paths as shown.",
   "version": 1,
   "hooks": {
+    "sessionStart": [
+      {
+        "command": "bash $HOME/Github/my_ai_brain/scripts/cursor-hook-ensure-services.sh",
+        "timeout": 15
+      }
+    ],
     "sessionEnd": [
       {
-        "command": "hooks/open-brain-backup.sh",
+        "command": "bash $HOME/Github/my_ai_brain/scripts/cursor-hook-backup.sh",
         "timeout": 30
       }
     ]

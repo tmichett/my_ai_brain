@@ -85,11 +85,20 @@ Add to `~/.cursor/mcp.json` (see `docs/cursor-mcp-config.json` for template):
 ### After reboot
 
 ```bash
+./scripts/start-ai-brain.sh
+# or from anywhere (symlink): ~/start-ai-brain.sh
+```
+
+Starts Ollama, Supabase, and Agentic OS dashboard containers if down. A Cursor `sessionStart` hook runs the same check automatically when you open a new agent session.
+
+Manual equivalent:
+
+```bash
 podman start ollama
 podman ps -a --filter "name=supabase_" --format "{{.Names}}" | xargs podman start
 ```
 
-A Cursor rule (`open-brain-preflight.mdc`) auto-checks services before use.
+A Cursor rule (`open-brain-preflight.mdc`) also auto-checks Open Brain services before MCP use.
 
 ### Backup
 
@@ -119,7 +128,12 @@ my_ai_brain/
 │       └── index.ts      # MCP server implementation
 ├── scripts/
 │   ├── backup.sh         # Export thoughts to JSON (for vault sync)
-│   └── restore.sh        # Import thoughts + regenerate embeddings
+│   ├── restore.sh        # Import thoughts + regenerate embeddings
+│   ├── verify.sh         # Health check all components
+│   ├── ensure-ai-brain-services.sh  # Start Ollama/Supabase/dashboard if down
+│   ├── start-ai-brain.sh            # Wrapper for ensure script
+│   ├── cursor-hook-ensure-services.sh  # Cursor sessionStart hook
+│   └── cursor-hook-backup.sh        # Cursor sessionEnd backup hook
 ├── sql/
 │   └── 001-setup.sql     # Database schema (pgvector, thoughts table, RLS)
 └── docs/
