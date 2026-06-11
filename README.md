@@ -126,10 +126,18 @@ my_ai_brain/
 │   ├── tsconfig.json
 │   └── src/
 │       └── index.ts      # MCP server implementation
+├── canvases/             # Cursor IDE interactive canvases (.canvas.tsx)
+│   ├── course-build-workflow.canvas.tsx
+│   └── README.md
+├── assets/diagrams/      # Static SVG/PNG exports for Obsidian
+├── visualizations/       # Standalone Vite apps (browser, no Cursor)
+│   └── course-build-workflow/
 ├── scripts/
 │   ├── backup.sh         # Export thoughts to JSON (for vault sync)
 │   ├── restore.sh        # Import thoughts + regenerate embeddings
 │   ├── verify.sh         # Health check all components
+│   ├── setup-canvas-sdk.sh  # Link canvases into Cursor + install type stubs
+│   ├── generate-course-build-workflow-diagram.py  # SVG/PNG for Obsidian
 │   ├── ensure-ai-brain-services.sh  # Start Ollama/Supabase/dashboard if down
 │   ├── start-ai-brain.sh            # Wrapper for ensure script
 │   ├── cursor-hook-ensure-services.sh  # Cursor sessionStart hook

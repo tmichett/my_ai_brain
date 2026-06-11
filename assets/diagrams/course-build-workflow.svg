@@ -1,0 +1,99 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2788" height="352" viewBox="0 0 2788 352">
+<rect width="100%" height="100%" fill="#0d1117"/>
+<text x="32" y="28" fill="#e6edf3" font-family="system-ui,sans-serif" font-size="20" font-weight="600">Course Build Workflow</text>
+<text x="32" y="48" fill="#8b949e" font-family="system-ui,sans-serif" font-size="12">dle-doit · Ansible inventory · Automation Controller · Execution Environment</text>
+<text x="107.0" y="60" fill="#8b949e" font-family="system-ui,sans-serif" font-size="11" font-weight="600" text-anchor="middle">Scaffold</text>
+<text x="107.0" y="72" fill="#8b949e" font-family="system-ui,sans-serif" font-size="9" text-anchor="middle" opacity="0.8">create_inventory</text>
+<text x="305.0" y="60" fill="#8b949e" font-family="system-ui,sans-serif" font-size="11" font-weight="600" text-anchor="middle">Configure</text>
+<text x="305.0" y="72" fill="#8b949e" font-family="system-ui,sans-serif" font-size="9" text-anchor="middle" opacity="0.8">inventory + SSL PEMs</text>
+<text x="503.0" y="60" fill="#8b949e" font-family="system-ui,sans-serif" font-size="11" font-weight="600" text-anchor="middle">Artifacts</text>
+<text x="503.0" y="72" fill="#8b949e" font-family="system-ui,sans-serif" font-size="9" text-anchor="middle" opacity="0.8">Heat + git push</text>
+<text x="701.0" y="60" fill="#8b949e" font-family="system-ui,sans-serif" font-size="11" font-weight="600" text-anchor="middle">Controller</text>
+<text x="701.0" y="72" fill="#8b949e" font-family="system-ui,sans-serif" font-size="9" text-anchor="middle" opacity="0.8">GitHub + EE</text>
+<text x="899.0" y="60" fill="#8b949e" font-family="system-ui,sans-serif" font-size="11" font-weight="600" text-anchor="middle">Provision</text>
+<text x="899.0" y="72" fill="#8b949e" font-family="system-ui,sans-serif" font-size="9" text-anchor="middle" opacity="0.8">site.yml</text>
+<text x="1097.0" y="60" fill="#8b949e" font-family="system-ui,sans-serif" font-size="11" font-weight="600" text-anchor="middle">Complete</text>
+<text x="1097.0" y="72" fill="#8b949e" font-family="system-ui,sans-serif" font-size="9" text-anchor="middle" opacity="0.8">classroom live</text>
+<path d="M 182 97.0 C 206.0 97.0, 206.0 97.0, 230 97.0" fill="none" stroke="#484f58" stroke-width="1.5" marker-end="url(#arrow)"/>
+<path d="M 380 97.0 C 404.0 97.0, 404.0 97.0, 428 97.0" fill="none" stroke="#484f58" stroke-width="1.5" marker-end="url(#arrow)"/>
+<path d="M 578 97.0 C 602.0 97.0, 602.0 97.0, 626 97.0" fill="none" stroke="#484f58" stroke-width="1.5" marker-end="url(#arrow)"/>
+<path d="M 776 97.0 C 800.0 97.0, 800.0 97.0, 824 97.0" fill="none" stroke="#484f58" stroke-width="1.5" marker-end="url(#arrow)"/>
+<path d="M 776 97.0 C 800.0 97.0, 800.0 171.0, 824 171.0" fill="none" stroke="#484f58" stroke-width="1.5" marker-end="url(#arrow)"/>
+<path d="M 974 97.0 C 998.0 97.0, 998.0 97.0, 1022 97.0" fill="none" stroke="#484f58" stroke-width="1.5" marker-end="url(#arrow)"/>
+<path d="M 974 171.0 C 1097.0 171.0, 1097.0 97.0, 1220 97.0" fill="none" stroke="#484f58" stroke-width="1.5" marker-end="url(#arrow)"/>
+<path d="M 1172 97.0 C 1196.0 97.0, 1196.0 97.0, 1220 97.0" fill="none" stroke="#484f58" stroke-width="1.5" marker-end="url(#arrow)"/>
+<path d="M 1370 97.0 C 1394.0 97.0, 1394.0 97.0, 1418 97.0" fill="none" stroke="#484f58" stroke-width="1.5" marker-end="url(#arrow)"/>
+<path d="M 1568 97.0 C 1592.0 97.0, 1592.0 97.0, 1616 97.0" fill="none" stroke="#484f58" stroke-width="1.5" marker-end="url(#arrow)"/>
+<path d="M 1766 97.0 C 1790.0 97.0, 1790.0 97.0, 1814 97.0" fill="none" stroke="#484f58" stroke-width="1.5" marker-end="url(#arrow)"/>
+<path d="M 1964 97.0 C 1988.0 97.0, 1988.0 97.0, 2012 97.0" fill="none" stroke="#484f58" stroke-width="1.5" marker-end="url(#arrow)"/>
+<path d="M 2162 97.0 C 2186.0 97.0, 2186.0 97.0, 2210 97.0" fill="none" stroke="#484f58" stroke-width="1.5" marker-end="url(#arrow)"/>
+<path d="M 2360 97.0 C 2384.0 97.0, 2384.0 97.0, 2408 97.0" fill="none" stroke="#484f58" stroke-width="1.5" marker-end="url(#arrow)"/>
+<path d="M 2558 97.0 C 2582.0 97.0, 2582.0 97.0, 2606 97.0" fill="none" stroke="#484f58" stroke-width="1.5" marker-end="url(#arrow)"/>
+<defs><marker id="arrow" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#484f58"/></marker></defs>
+<rect x="32" y="68" width="150" height="58" rx="6" fill="#2c3440" stroke="#484f58"/>
+<text x="40" y="86" fill="#e6edf3" font-family="system-ui,sans-serif" font-size="11" font-weight="600">New course repo</text>
+<text x="40" y="102" fill="#8b949e" font-family="system-ui,sans-serif" font-size="9">RedHatTraining/{SKU}</text>
+<rect x="230" y="68" width="150" height="58" rx="6" fill="#3d3528" stroke="#484f58"/>
+<text x="238" y="86" fill="#e6edf3" font-family="system-ui,sans-serif" font-size="11" font-weight="600">create_inventory</text>
+<text x="238" y="102" fill="#8b949e" font-family="system-ui,sans-serif" font-size="9">profile + rhelver</text>
+<rect x="428" y="68" width="150" height="58" rx="6" fill="#2c3440" stroke="#484f58"/>
+<text x="436" y="86" fill="#e6edf3" font-family="system-ui,sans-serif" font-size="11" font-weight="600">Inventory scaffold</text>
+<text x="436" y="102" fill="#8b949e" font-family="system-ui,sans-serif" font-size="9">inventory ·</text>
+<text x="436" y="114" fill="#8b949e" font-family="system-ui,sans-serif" font-size="9">group_vars ·</text>
+<rect x="626" y="68" width="150" height="58" rx="6" fill="#3a3a3c" stroke="#484f58"/>
+<text x="634" y="86" fill="#e6edf3" font-family="system-ui,sans-serif" font-size="11" font-weight="600">Configure course</text>
+<text x="634" y="102" fill="#8b949e" font-family="system-ui,sans-serif" font-size="9">course.yml · SSL_VMs</text>
+<rect x="824" y="68" width="150" height="58" rx="6" fill="#3d3528" stroke="#484f58"/>
+<text x="832" y="86" fill="#e6edf3" font-family="system-ui,sans-serif" font-size="11" font-weight="600">validate_inventory</text>
+<text x="832" y="102" fill="#8b949e" font-family="system-ui,sans-serif" font-size="9">schema vs</text>
+<text x="832" y="114" fill="#8b949e" font-family="system-ui,sans-serif" font-size="9">profiles.yml</text>
+<rect x="824" y="142" width="150" height="58" rx="6" fill="#3d3528" stroke="#484f58"/>
+<text x="832" y="160" fill="#e6edf3" font-family="system-ui,sans-serif" font-size="11" font-weight="600">get_ssl_certs</text>
+<text x="832" y="176" fill="#8b949e" font-family="system-ui,sans-serif" font-size="9">DLE-Web → files/ssl/</text>
+<rect x="1022" y="68" width="150" height="58" rx="6" fill="#3d3528" stroke="#484f58"/>
+<text x="1030" y="86" fill="#e6edf3" font-family="system-ui,sans-serif" font-size="11" font-weight="600">dle-doit pipeline</text>
+<text x="1030" y="102" fill="#8b949e" font-family="system-ui,sans-serif" font-size="9">Heat templates</text>
+<rect x="1220" y="68" width="150" height="58" rx="6" fill="#2c3440" stroke="#484f58"/>
+<text x="1228" y="86" fill="#e6edf3" font-family="system-ui,sans-serif" font-size="11" font-weight="600">git commit &amp; push</text>
+<text x="1228" y="102" fill="#8b949e" font-family="system-ui,sans-serif" font-size="9">PEMs ·</text>
+<text x="1228" y="114" fill="#8b949e" font-family="system-ui,sans-serif" font-size="9">requirements.yml</text>
+<rect x="1418" y="68" width="150" height="58" rx="6" fill="#1e3a5f" stroke="#484f58"/>
+<text x="1426" y="86" fill="#e6edf3" font-family="system-ui,sans-serif" font-size="11" font-weight="600">AAP Project sync</text>
+<text x="1426" y="102" fill="#8b949e" font-family="system-ui,sans-serif" font-size="9">GitHub →</text>
+<text x="1426" y="114" fill="#8b949e" font-family="system-ui,sans-serif" font-size="9">/runner/project/</text>
+<rect x="1616" y="68" width="150" height="58" rx="6" fill="#1e3a5f" stroke="#484f58"/>
+<text x="1624" y="86" fill="#e6edf3" font-family="system-ui,sans-serif" font-size="11" font-weight="600">Execution Environment</text>
+<text x="1624" y="102" fill="#8b949e" font-family="system-ui,sans-serif" font-size="9">Job template + EE</text>
+<rect x="1814" y="68" width="150" height="58" rx="6" fill="#1e3a5f" stroke="#484f58"/>
+<text x="1822" y="86" fill="#e6edf3" font-family="system-ui,sans-serif" font-size="11" font-weight="600">site.yml</text>
+<text x="1822" y="102" fill="#8b949e" font-family="system-ui,sans-serif" font-size="9">ansible-playbooks-</text>
+<text x="1822" y="114" fill="#8b949e" font-family="system-ui,sans-serif" font-size="9">novello</text>
+<rect x="2012" y="68" width="150" height="58" rx="6" fill="#2a3530" stroke="#484f58"/>
+<text x="2020" y="86" fill="#e6edf3" font-family="system-ui,sans-serif" font-size="11" font-weight="600">dle.components</text>
+<text x="2020" y="102" fill="#8b949e" font-family="system-ui,sans-serif" font-size="9">features · IdM SSL</text>
+<rect x="2210" y="68" width="150" height="58" rx="6" fill="#2a3530" stroke="#484f58"/>
+<text x="2218" y="86" fill="#e6edf3" font-family="system-ui,sans-serif" font-size="11" font-weight="600">Course playbooks</text>
+<text x="2218" y="102" fill="#8b949e" font-family="system-ui,sans-serif" font-size="9">upgrade · VS Code ·</text>
+<text x="2218" y="114" fill="#8b949e" font-family="system-ui,sans-serif" font-size="9">clean</text>
+<rect x="2408" y="68" width="150" height="58" rx="6" fill="#2a3530" stroke="#484f58"/>
+<text x="2416" y="86" fill="#e6edf3" font-family="system-ui,sans-serif" font-size="11" font-weight="600">AAP install</text>
+<text x="2416" y="102" fill="#8b949e" font-family="system-ui,sans-serif" font-size="9">optional ·</text>
+<text x="2416" y="114" fill="#8b949e" font-family="system-ui,sans-serif" font-size="9">custom_ca_cert</text>
+<rect x="2606" y="68" width="150" height="58" rx="6" fill="#388bfd" stroke="#484f58"/>
+<text x="2614" y="86" fill="#0d1117" font-family="system-ui,sans-serif" font-size="11" font-weight="600">Classroom ready</text>
+<text x="2614" y="102" fill="#0d1117" font-family="system-ui,sans-serif" font-size="9">TLS · features ·</text>
+<text x="2614" y="114" fill="#0d1117" font-family="system-ui,sans-serif" font-size="9">content</text>
+<text x="32" y="262" fill="#e6edf3" font-family="system-ui,sans-serif" font-size="11" font-weight="600">Legend</text>
+<rect x="32" y="270" width="10" height="10" rx="2" fill="#3a3a3c" stroke="#484f58"/>
+<text x="48" y="279" fill="#8b949e" font-family="system-ui,sans-serif" font-size="10">Developer</text>
+<rect x="162" y="270" width="10" height="10" rx="2" fill="#2c3440" stroke="#484f58"/>
+<text x="178" y="279" fill="#8b949e" font-family="system-ui,sans-serif" font-size="10">Course repo</text>
+<rect x="292" y="270" width="10" height="10" rx="2" fill="#3d3528" stroke="#484f58"/>
+<text x="308" y="279" fill="#8b949e" font-family="system-ui,sans-serif" font-size="10">dle-doit</text>
+<rect x="422" y="270" width="10" height="10" rx="2" fill="#1e3a5f" stroke="#484f58"/>
+<text x="438" y="279" fill="#8b949e" font-family="system-ui,sans-serif" font-size="10">Automation Controller</text>
+<rect x="552" y="270" width="10" height="10" rx="2" fill="#2a3530" stroke="#484f58"/>
+<text x="568" y="279" fill="#8b949e" font-family="system-ui,sans-serif" font-size="10">Lab targets</text>
+<text x="32" y="300" fill="#8b949e" font-family="ui-monospace,monospace" font-size="9">Inventory: classroom/ansible-playbooks-novello/ · inventory.yml · group_vars · files/ssl/</text>
+<text x="32" y="314" fill="#8b949e" font-family="ui-monospace,monospace" font-size="9">Controller: GitHub project sync · EE · collections/requirements.yml at repo root · inventory_dir for PEMs</text>
+</svg>
