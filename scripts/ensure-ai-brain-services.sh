@@ -127,6 +127,15 @@ dashboard_config_ok() {
   return 0
 }
 
+loop_watcher_ok() {
+  # Optional: only required when AGENTIC_OS_LOOP_WATCHER=1 (Travis default)
+  local want="${AGENTIC_OS_LOOP_WATCHER:-1}"
+  [[ "$want" == "1" ]] || return 0
+  container_running agentic-os-scheduler || return 1
+  podman exec agentic-os-scheduler pgrep -f 'loop_watcher\.py' >/dev/null 2>&1 || return 1
+  return 0
+}
+
 report_dashboard_config() {
   local mode backend ok=0
   load_agentic_os_env
@@ -180,6 +189,7 @@ services_healthy() {
   container_running ollama || return 1
   container_running supabase_kong_travis || return 1
   container_running agentic-os-dashboard || return 1
+  loop_watcher_ok || return 1
   curl -sf --max-time 3 "${OLLAMA_URL}/api/tags" >/dev/null 2>&1 || return 1
   supabase_key="$(load_supabase_key 2>/dev/null)" || return 1
   curl -sf --max-time 3 "${SUPABASE_URL}/rest/v1/" -H "apikey: ${supabase_key}" >/dev/null 2>&1 || return 1
@@ -228,6 +238,29 @@ start_supabase_containers() {
   fi
 }
 
+start_loop_watcher_sidecar_if_needed() {
+  local sidecar want
+  want="${AGENTIC_OS_LOOP_WATCHER:-1}"
+  [[ "$want" == "1" ]] || return 0
+  if loop_watcher_ok; then
+    log "  agentic-os-scheduler (loop watcher): already running"
+    return 0
+  fi
+  sidecar="$(resolve_dashboard_script)"
+  sidecar="${sidecar%/*}/scripts/start-scheduler-sidecar.sh"
+  if [[ -x "$sidecar" ]]; then
+    log "  starting loop watcher sidecar..."
+    SCHEDULER_SERVICES="${SCHEDULER_SERVICES:-loop-only}" \
+    SCHEDULER_CONFIG="${SCHEDULER_CONFIG:-/app/config-empty.yaml}" \
+      "$sidecar" >/dev/null
+    STARTED_ANY=1
+    log "  agentic-os-scheduler: started (loop-only)"
+    return 0
+  fi
+  warn "loop watcher sidecar missing at ${sidecar} — agentic loops will not retry"
+  return 1
+}
+
 start_agentic_os_dashboard() {
   local script
   load_agentic_os_env
@@ -236,10 +269,12 @@ start_agentic_os_dashboard() {
   if container_running agentic-os-dashboard; then
     if dashboard_config_ok; then
       log "  agentic-os-dashboard: already running (EXECUTION_MODE=${EXPECTED_EXECUTION_MODE}, MEMORY_BACKEND=${EXPECTED_MEMORY_BACKEND})"
+      start_loop_watcher_sidecar_if_needed
       return 0
     fi
     if [[ -n "$script" && -x "$script" ]]; then
       recreate_dashboard_container "$script"
+      start_loop_watcher_sidecar_if_needed
       return 0
     fi
     warn "agentic-os-dashboard running with wrong EXECUTION_MODE/MEMORY_BACKEND and no container script to recreate"
@@ -252,10 +287,12 @@ start_agentic_os_dashboard() {
     STARTED_ANY=1
     if dashboard_config_ok; then
       log "  agentic-os-dashboard: started"
+      start_loop_watcher_sidecar_if_needed
       return 0
     fi
     if [[ -n "$script" && -x "$script" ]]; then
       recreate_dashboard_container "$script"
+      start_loop_watcher_sidecar_if_needed
       return 0
     fi
     warn "agentic-os-dashboard started but EXECUTION_MODE/MEMORY_BACKEND wrong — recreate manually"
@@ -267,6 +304,7 @@ start_agentic_os_dashboard() {
     "$script" >/dev/null
     STARTED_ANY=1
     log "  agentic-os-dashboard: created (EXECUTION_MODE=${EXPECTED_EXECUTION_MODE}, MEMORY_BACKEND=${EXPECTED_MEMORY_BACKEND})"
+    start_loop_watcher_sidecar_if_needed
     return 0
   fi
 
