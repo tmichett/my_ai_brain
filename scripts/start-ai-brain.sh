@@ -35,4 +35,4 @@ if [[ ! -x "$ENSURE" ]]; then
   exit 1
 fi
 
-exec "$ENSURE" "${args[@]}"
+exec "$ENSURE" ${args[@]+"${args[@]}"}

@@ -27,7 +27,7 @@ echo "Restoring $COUNT thoughts from: $INPUT"
 echo "Embeddings will be regenerated via Ollama ($OLLAMA_MODEL)..."
 echo ""
 
-python3 << 'PYTHON'
+python3 << PYTHON
 import json, sys, subprocess, urllib.request
 
 input_path = "$INPUT"
