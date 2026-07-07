@@ -57,7 +57,15 @@ $$;
 ALTER TABLE public.thoughts ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Service role full access" ON public.thoughts;
+-- Local Supabase sb_secret_* keys bind as Postgres role service_role directly;
+-- auth.role() JWT checks fail for INSERT (42501). Use TO service_role instead.
 CREATE POLICY "Service role full access"
   ON public.thoughts
   FOR ALL
-  USING (auth.role() = 'service_role');
+  TO service_role
+  USING (true)
+  WITH CHECK (true);
+
+GRANT ALL ON TABLE public.thoughts TO service_role;
+GRANT USAGE ON SCHEMA public TO anon, authenticated, service_role;
+GRANT ALL ON TABLE public.thoughts TO anon, authenticated, service_role;
