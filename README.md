@@ -100,6 +100,16 @@ podman ps -a --filter "name=supabase_" --format "{{.Names}}" | xargs podman star
 
 A Cursor rule (`open-brain-preflight.mdc`) also auto-checks Open Brain services before MCP use.
 
+### After sleep / lid close
+
+Closing the laptop lid kills Cursor's MCP stdio pipes, and Cursor doesn't auto-reconnect on wake — every MCP server shows red even though the infra above is fine. One-time setup:
+
+```bash
+./scripts/install-sleepwatcher-wake.sh
+```
+
+Installs Homebrew `sleepwatcher` and wires `~/.wakeup` to `scripts/cursor-mcp-wake-reminder.sh`, which re-checks infra health (starting it in the background if needed) and shows a macOS notification reminding you to **Reload Cursor** (`Cmd+Shift+P` → Reload Window) to reconnect MCP. Log: `~/Library/Logs/cursor-mcp-wake-reminder.log`. macOS only.
+
 ### Backup
 
 ```bash
@@ -141,7 +151,10 @@ my_ai_brain/
 │   ├── ensure-ai-brain-services.sh  # Start Ollama/Supabase/dashboard if down
 │   ├── start-ai-brain.sh            # Wrapper for ensure script
 │   ├── cursor-hook-ensure-services.sh  # Cursor sessionStart hook
-│   └── cursor-hook-backup.sh        # Cursor sessionEnd backup hook
+│   ├── cursor-hook-backup.sh        # Cursor sessionEnd backup hook
+│   ├── cursor-mcp-wake-reminder.sh  # sleepwatcher ~/.wakeup handler — health check + Reload Cursor notification
+│   ├── cursor-mcp-sleep-noop.sh     # sleepwatcher ~/.sleep placeholder (required to exist)
+│   └── install-sleepwatcher-wake.sh # One-shot installer for the two hooks above (macOS)
 ├── sql/
 │   └── 001-setup.sql     # Database schema (pgvector, thoughts table, RLS)
 └── docs/
