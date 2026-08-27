@@ -1,20 +1,27 @@
 #!/usr/bin/env bash
-# Launcher for Cursor MCP — stable Node path (Cursor does not load fnm/nvm shells).
+# Launcher for MCP clients — stable Node path (Cursor/Bob do not load fnm/nvm shells).
 set -euo pipefail
 
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# Load Supabase key from mcp.json when env is missing (Cursor sometimes omits env on retry).
+# Load env from a known MCP config file when env is missing (clients sometimes omit env on retry).
 load_open_brain_env() {
   python3 - <<'PY'
 import json, os, sys
-path = os.path.expanduser("~/.cursor/mcp.json")
-try:
-    with open(path) as f:
-        env = json.load(f)["mcpServers"]["open-brain"]["env"]
-except Exception as exc:
-    print(f"open-brain MCP: could not read {path}: {exc}", file=sys.stderr)
+
+def try_load(path):
+    try:
+        with open(os.path.expanduser(path)) as f:
+            return json.load(f)["mcpServers"]["open-brain"]["env"]
+    except Exception:
+        return None
+
+# Check Bob global config first, then Cursor fallback
+env = try_load("~/.bob/settings/mcp.json") or try_load("~/.cursor/mcp.json")
+if not env:
+    print("open-brain MCP: could not find open-brain env in ~/.bob/settings/mcp.json or ~/.cursor/mcp.json", file=sys.stderr)
     sys.exit(1)
+
 for key in ("SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY", "OLLAMA_URL", "OLLAMA_EMBED_MODEL"):
     val = env.get(key) or os.environ.get(key)
     if val:
@@ -28,7 +35,7 @@ if [[ -z "${SUPABASE_SERVICE_ROLE_KEY:-}" ]]; then
 fi
 
 if [[ -z "${SUPABASE_SERVICE_ROLE_KEY:-}" ]]; then
-  echo "open-brain MCP: SUPABASE_SERVICE_ROLE_KEY is required (set in ~/.cursor/mcp.json env)" >&2
+  echo "open-brain MCP: SUPABASE_SERVICE_ROLE_KEY is required (set env in ~/.bob/settings/mcp.json or ~/.cursor/mcp.json)" >&2
   exit 1
 fi
 
