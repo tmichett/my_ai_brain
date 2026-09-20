@@ -2,7 +2,7 @@
 
 **Date:** 2026-09-20  
 **Depends on:** spec `2026-09-19-multi-machine-ai-brain-sync-design.md` (amended freeze-Apple)  
-**Status:** The Intel/Fedora scripts and `brain-sync.sh` are **not built yet**. Phase 0 must finish before Phases 1–3 are runnable as written.
+**Status:** Fedora-first drop is in the working trees: shared `brain-sync.sh` + Travis-Fedora named scripts. Intel scripts are **not** in this drop. Apple live entrypoints are still frozen.
 
 Each machine runs its **own** Ollama + Supabase. Obsidian LiveSync already copies notes. Open Brain thoughts ride `open-brain-sync/thoughts.json` via UUID union-merge (`brain-sync`). Dashboard queues and Supabase keys stay **local**.
 
@@ -12,8 +12,8 @@ Each machine runs its **own** Ollama + Supabase. Obsidian LiveSync already copie
 
 On whatever clone you use to implement (this can be Travis-Mac_Apple git, without changing live Apple start scripts):
 
-1. Implement the plan: shared `thoughts_merge.py` + `brain-sync.sh`, plus Intel/Fedora named scripts (do **not** rewrite Apple `ensure` / `run-container-travis.sh` / `health-check-travis.sh`).
-2. Merge/push those repos when you are ready (`my_ai_brain`, `agentic-os-dashboard`).
+1. ~~Implement Fedora-first tooling~~ (in tree, uncommitted until you push): `thoughts_merge.py` + `brain-sync.sh` + Travis-Fedora named scripts. Apple `ensure` / `run-container-travis.sh` / `health-check-travis.sh` were not rewritten.
+2. Merge/push those repos when you are ready (`my_ai_brain`, `agentic-os-dashboard`) so Fedora can `git pull`.
 3. On Apple, confirm the frozen stack still works: `~/start-ai-brain.sh --check-only` and `./scripts/health-check-travis.sh --quick`.
 
 ---
@@ -67,18 +67,17 @@ Prereqs: Obsidian vault already LiveSync’d to a local path; git clones of `my_
 
 ## Phase 3 — Travis-Fedora (new)
 
-Same idea as Intel, different OS plumbing.
+**Full steps:** [docs/hosts/TRAVIS-FEDORA-QUICKSTART.md](../../hosts/TRAVIS-FEDORA-QUICKSTART.md) (this repo) and `agentic-os-dashboard/docs/TRAVIS-FEDORA.md`.
 
-1. `sudo dnf install -y podman nodejs npm jq util-linux`; install Supabase CLI per `my_ai_brain` README. **No** `podman machine`.
-2. Clone both repos; confirm vault LiveSync path (often `/home/travis/...` — use the real path).
-3. `./scripts/install-ai-brain.sh --host=travis-fedora --vault "/actual/fedora/vault/path"`  
-   Symlink `~/start-ai-brain.sh` → **`start-ai-brain-travis-fedora.sh`**. `LOG_DIR` must be `~/.local/state/ai-brain`, not `~/Library/Logs`.
-4. Start Ollama + Supabase locally; apply schema; **new** service-role key in Fedora `~/.cursor/mcp.json`.
-5. `setup-cursor-bridge.sh --vault "<fedora vault>" --memory-backend open-brain --brain-read-gate`.
-6. Fill vault path in `run-container-travis-fedora.sh`; run it (SELinux `:z` on the mount). Optional: `./scripts/install-agentic-os-systemd.sh` (runner optional).
-7. Point Fedora `hooks.json` at **`cursor-hook-ensure-services-travis-fedora.sh`**, not the Apple hook path.
-8. Reload Cursor. `./scripts/health-check-travis-fedora.sh --quick`. No sleepwatcher; after suspend, Reload Window.
-9. LiveSync → `brain-sync pull` → `status` → test capture → `push`.
+Home `/home/travis`; clones `/home/travis/Github/{my_ai_brain,agentic-os-dashboard}`. LiveSync vault is **already working**. Vault root: `/home/travis/Obsidian/obsidian-work/obsidian-work` (not the nested `Agentic OS Dashboard/` folder).
+
+1. `sudo dnf install -y podman nodejs npm jq util-linux git python3 curl`. **No** `podman machine`.
+2. `git pull` (or copy) a tree that contains the Fedora scripts.
+3. `./scripts/install-ai-brain.sh --host=travis-fedora --vault "/home/travis/Obsidian/obsidian-work/obsidian-work"`
+4. `./scripts/bootstrap-open-brain-travis-fedora.sh` then local `supabase start` + `sql/001-setup.sql` + **this host’s** key in `mcp.json`.
+5. Dashboard: `setup-cursor-bridge.sh --vault … --memory-backend open-brain --brain-read-gate` then `./run-container-travis-fedora.sh`.
+6. Fedora `hooks.json` → `cursor-hook-ensure-services-travis-fedora.sh`. Reload Cursor. `health-check-travis-fedora.sh --quick`.
+7. LiveSync → `brain-sync pull` → `status` → test capture → `push`.
 
 ---
 
@@ -95,7 +94,7 @@ Same idea as Intel, different OS plumbing.
 
 ## Values you fill at install time
 
-- Travis-Mac-Intel vault absolute path  
-- Travis-Fedora home + vault absolute path  
-- Whether Intel/Fedora get headless `agent-runner` (default: skip)  
+- Travis-Mac-Intel vault absolute path (still unknown)
+- Travis-Fedora vault root: `/home/travis/Obsidian/obsidian-work/obsidian-work` (LiveSync already working; home `/home/travis`)
+- Whether Intel/Fedora get headless `agent-runner` (default: skip)
 - Snapshot `SNAPSHOT_DIR` if you enable dated backups  

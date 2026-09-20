@@ -1,0 +1,229 @@
+# Travis-Fedora
+
+Display name: **Travis-Fedora** (`travis-fedora`). Native Podman on Linux. Home directory is `/home/travis`.
+
+**Install on this machine:** follow **[TRAVIS-FEDORA-QUICKSTART.md](TRAVIS-FEDORA-QUICKSTART.md)** (copy-paste steps, vault root, verify, first `brain-sync`).
+
+This page is the path cheat-sheet. Sibling dashboard notes: `~/Github/agentic-os-dashboard/docs/TRAVIS-FEDORA.md`.
+
+This machine runs its **own** Ollama + Supabase. Obsidian LiveSync already copies notes. Open Brain thoughts sync through `${VAULT_DIR}/open-brain-sync/thoughts.json` (UUID union-merge). Do **not** copy Apple’s `SUPABASE_SERVICE_ROLE_KEY` or `runs.db`.
+
+Do **not** run Apple scripts here (`ensure-ai-brain-services.sh`, `start-ai-brain.sh`, `run-container-travis.sh`, `health-check-travis.sh`).
+
+Sibling dashboard runbook: [`agentic-os-dashboard/docs/TRAVIS-FEDORA.md`](../../../agentic-os-dashboard/docs/TRAVIS-FEDORA.md) (same clone: `~/Github/agentic-os-dashboard/docs/TRAVIS-FEDORA.md`).
+
+---
+
+## Paths on this host
+
+| Item | Path |
+|------|------|
+| Home | `/home/travis` |
+| `my_ai_brain` | `/home/travis/Github/my_ai_brain` |
+| `agentic-os-dashboard` | `/home/travis/Github/agentic-os-dashboard` |
+| Logs | `~/.local/state/ai-brain` |
+| Config | `~/.config/ai-brain/env` |
+| Dashboard data | `~/.local/share/agentic-os-dashboard/` |
+| Vault root | `/home/travis/Obsidian/obsidian-work/obsidian-work` |
+
+LiveSync is **already working**. Same vault as Travis-Mac_Apple; only the host path differs:
+
+| Host | Vault root |
+|------|------------|
+| Travis-Mac_Apple | `/Users/travis/Documents/MBP-M3-RH/Obsidian-Work-Vault/Obsidian-Work` |
+| Travis-Fedora | `/home/travis/Obsidian/obsidian-work/obsidian-work` |
+
+`Agentic OS Dashboard/` is a **folder inside** the vault (Mac: `…/Obsidian-Work/Agentic OS Dashboard`). Do **not** pass that nested path as `--vault` / `OBSIDIAN_VAULT_DIR` / `KB_DIR`. Those must be the vault root (`hot.md`, `AI Brain/`, `open-brain-sync/`).
+
+Confirm: `ls /home/travis/Obsidian/obsidian-work/obsidian-work/hot.md`
+
+---
+
+## 0. Packages
+
+```bash
+sudo dnf install -y podman nodejs npm jq util-linux git python3 curl
+git --version   # need >= 2.42 for agent --trailer
+node --version  # 20+
+```
+
+**No** `podman machine`. Optional lingering so user systemd units survive logout:
+
+```bash
+loginctl enable-linger travis
+```
+
+Supabase CLI is not in Fedora’s default repos. Install one of:
+
+```bash
+# A) npm global
+npm install -g supabase
+
+# B) GitHub release binary into ~/.local/bin
+# https://github.com/supabase/cli/releases
+```
+
+Confirm: `supabase --version`.
+
+---
+
+## 1. Repos (already cloned)
+
+```text
+/home/travis/Github/my_ai_brain
+/home/travis/Github/agentic-os-dashboard
+```
+
+Checkout a branch that contains these Fedora scripts (`brain-sync.sh`, `*-travis-fedora.sh`, `run-container-travis-fedora.sh`).
+
+---
+
+## 2. Obsidian + LiveSync (already done)
+
+Do **not** re-create the vault or re-pair LiveSync. Obsidian on Fedora already has the vault open.
+
+Keep Local REST API enabled so Cursor MCP works (same plugin as Apple).
+
+---
+
+## 3. Write host env + start symlink
+
+```bash
+cd /home/travis/Github/my_ai_brain
+chmod +x scripts/*.sh scripts/lib/*.sh 2>/dev/null || true
+
+./scripts/install-ai-brain.sh --host=travis-fedora \
+  --vault "/home/travis/Obsidian/obsidian-work/obsidian-work"
+```
+
+This writes `~/.config/ai-brain/env`, creates `open-brain-sync/` in the vault, `npm install`s `mcp-server`, and:
+
+```text
+~/start-ai-brain.sh  →  …/start-ai-brain-travis-fedora.sh
+```
+
+It does **not** write `mcp.json` keys.
+
+---
+
+## 4. First-time Open Brain (once)
+
+Ollama container:
+
+```bash
+./scripts/bootstrap-open-brain-travis-fedora.sh
+```
+
+Local Supabase (new project on **this** host):
+
+```bash
+mkdir -p "$HOME/supabase-ai-brain" && cd "$HOME/supabase-ai-brain"
+supabase init     # first time only
+supabase start
+
+DB=$(podman ps --filter name=supabase_db --format '{{.Names}}' | head -1)
+KONG=$(podman ps --filter name=supabase_kong --format '{{.Names}}' | head -1)
+podman exec -i "$DB" psql -U postgres < "$HOME/Github/my_ai_brain/sql/001-setup.sql"
+podman exec "$KONG" cat /home/kong/kong.yml | grep sb_secret
+```
+
+Put **this** `sb_secret` into Fedora `~/.cursor/mcp.json` under `open-brain` (see `docs/cursor-mcp-config.json`). Point `command` at:
+
+```text
+/home/travis/Github/my_ai_brain/mcp-server/run-mcp.sh
+```
+
+Then:
+
+```bash
+cd /home/travis/Github/my_ai_brain/mcp-server
+npm install
+npm run build
+```
+
+`run-mcp.sh` looks for `/usr/bin/node` on Fedora.
+
+---
+
+## 5. Dashboard bridge + container
+
+```bash
+cd /home/travis/Github/agentic-os-dashboard
+
+./scripts/setup-cursor-bridge.sh \
+  --vault "/home/travis/Obsidian/obsidian-work/obsidian-work" \
+  --memory-backend open-brain \
+  --brain-read-gate
+
+chmod +x run-container-travis-fedora.sh
+./run-container-travis-fedora.sh
+```
+
+`run-container.sh` already uses SELinux `:z` on bind mounts. Optional headless runner (skip if Cursor chat pickup is enough):
+
+```bash
+./scripts/install-agentic-os-systemd.sh --dashboard-only --skip-skills
+```
+
+---
+
+## 6. Cursor sessionStart hook
+
+Point **Fedora** `~/.cursor/hooks.json` at the Fedora ensure script, **not** Apple `cursor-hook-ensure-services.sh`. Example command:
+
+```json
+"/home/travis/Github/my_ai_brain/scripts/cursor-hook-ensure-services-travis-fedora.sh"
+```
+
+Reload Cursor after `mcp.json` / hooks changes.
+
+---
+
+## 7. Verify
+
+```bash
+~/start-ai-brain.sh
+cd /home/travis/Github/my_ai_brain && ./scripts/verify-travis-fedora.sh
+cd /home/travis/Github/agentic-os-dashboard && ./scripts/health-check-travis-fedora.sh --quick
+```
+
+`MEMORY_BACKEND=open-brain` is expected: dashboard `/api/memory/user-model` **503** is a **pass**.
+
+After sleep: **Reload Window** in Cursor (no sleepwatcher on Linux).
+
+---
+
+## 8. First thought sync
+
+On Apple (when you are ready, watching LiveSync): `./scripts/brain-sync.sh push` so `open-brain-sync/thoughts.json` is non-zero.
+
+On Fedora, after LiveSync downloads that file:
+
+```bash
+cd /home/travis/Github/my_ai_brain
+./scripts/brain-sync.sh pull
+./scripts/brain-sync.sh status
+```
+
+`only-vault` should go to 0. Capture a test thought, then:
+
+```bash
+./scripts/brain-sync.sh push
+```
+
+If `thoughts.json` is **0 bytes**, do **not** pull. Push from a host that still has rows (usually Apple).
+
+`~/start-ai-brain.sh` already runs `brain-sync pull` after services are up.
+
+---
+
+## Daily
+
+| When | Command |
+|------|---------|
+| After reboot | `~/start-ai-brain.sh` |
+| Health | `~/Github/agentic-os-dashboard/scripts/health-check-travis-fedora.sh --quick` |
+| Leaving Fedora | `~/Github/my_ai_brain/scripts/brain-sync.sh push` |
+| Arriving | Wait for LiveSync, then `brain-sync.sh pull` and `status` |
+
+Apple `backup.sh` is a **legacy dump** — do not use it as the multi-machine sync on Fedora.
