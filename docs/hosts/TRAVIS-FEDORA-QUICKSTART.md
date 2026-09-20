@@ -166,15 +166,18 @@ supabase init      # first time only
 supabase start
 ```
 
-Wait until Kong is up, then apply schema and print **this** machine’s key:
+Wait until Kong is up, then apply schema and copy **this host’s** Secret into Fedora `~/.cursor/mcp.json` only.
 
 ```bash
 DB=$(podman ps --filter name=supabase_db --format '{{.Names}}' | head -1)
 KONG=$(podman ps --filter name=supabase_kong --format '{{.Names}}' | head -1)
 echo "DB=$DB  KONG=$KONG"
 podman exec -i "$DB" psql -U postgres < /home/travis/Github/my_ai_brain/sql/001-setup.sql
-podman exec "$KONG" cat /home/kong/kong.yml | grep sb_secret
 ```
+
+Read the Secret from the `supabase start` table or Kong, then put it in `mcp.json`. **Never paste that table into a GitHub issue/PR** — `tmichett/my_ai_brain` is public; GitHub secret scanning flags `sb_secret_…` (see issue #3). Local CLI often prints the same default JWT as other machines; that is still not for GitHub.
+
+> **GitHub:** do not `grep sb_secret` into a ticket. Keep keys in `~/.cursor/mcp.json` (mode 600).
 
 Container names will **not** be `supabase_db_travis` (that is Apple). Fedora scripts discover `supabase_db*` / `supabase_kong*`.
 
