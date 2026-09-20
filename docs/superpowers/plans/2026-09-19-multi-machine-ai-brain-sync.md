@@ -2,11 +2,11 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 >
-> **This session (2026-09-19):** Spec + plan only. Do **not** implement tasks below until Travis asks.
+> **Amended 2026-09-20:** Freeze Travis-Mac_Apple live entrypoints. Intel/Fedora get their own scripts. Shared merge only. Do **not** implement until Travis asks.
 
 **Goal:** Offline-first Open Brain on Travis-Mac_Apple, Travis-Mac-Intel, and Travis-Fedora, with UUID union-merge through the LiveSync vault so thoughts are not dropped when switching machines.
 
-**Architecture:** Each host runs local Ollama + local Supabase. `scripts/lib/thoughts_merge.py` unions thought rows by UUID. `brain-sync.sh` pulls (insert missing IDs + re-embed) and pushes (atomic write of merged envelope to `open-brain-sync/thoughts.json`). Machine paths live in `~/.config/ai-brain/env`. Dashboard `runs.db` and Supabase keys stay per-host.
+**Architecture:** Each host runs local Ollama + local Supabase. Shared `thoughts_merge.py` + `brain-sync.sh` do UUID union-merge. Travis-Mac_Apple daily scripts stay frozen. Travis-Mac-Intel and Travis-Fedora get separate start/ensure/health/dashboard wrappers that call the shared sync CLI. Dashboard `runs.db` and Supabase keys stay per-host.
 
 **Tech Stack:** bash 3.2-safe scripts, Python 3 stdlib only for merge/sync helpers, Podman, local Supabase pgvector, Ollama `nomic-embed-text`, Cursor hooks, LaunchAgents (macOS) / systemd --user (Fedora).
 
@@ -17,34 +17,43 @@
 - Host display names: **Travis-Mac_Apple**, **Travis-Mac-Intel**, **Travis-Fedora** (never “other Mac” / generic linux).
 - `AI_BRAIN_HOST` / `MACHINE_LABEL`: `travis-mac-apple` | `travis-mac-intel` | `travis-fedora`.
 - Sync algorithm: UUID union-merge; preserve `id`; never dedupe by `content`.
+- Freeze Travis-Mac_Apple: do **not** modify `ensure-ai-brain-services.sh`, `start-ai-brain.sh`, `run-container-travis.sh`, `health-check-travis.sh`, `backup.sh`, `restore.sh`, `verify.sh`, `cursor-hook-ensure-services.sh`, `cursor-hook-backup.sh`.
+- Do **not** turn Apple scripts into aliases of a generic portable script.
+- Intel and Fedora get **separate** named scripts (`*-travis-mac-intel`, `*-travis-fedora`), not `if linux` inside Apple files.
+- UUID merge lives in **one** library (`thoughts_merge.py` + `brain-sync.sh`); do not fork per host.
+- Apple joins the sync file via **manual** `brain-sync` in v1 (optional new hook file later; never edit Apple sessionStart ensure).
 - Empty/invalid vault JSON on pull: no-op (do not truncate local DB).
 - Push: union vault+local, atomic write; empty vault treated as empty list.
-- No hardcoded `MBP-M3-RH`, `supabase_db_travis`, or `~/Library/Logs` in rewritten scripts.
 - `VAULT_DIR` == `OBSIDIAN_VAULT_DIR` == `KB_DIR` (rule has trailing slash) on that host.
 - Do not sync `runs.db`, dashboard secret, or `SUPABASE_SERVICE_ROLE_KEY`.
 - Embeddings regenerated locally with `nomic-embed-text` (768d).
 - Envelope path: `${VAULT_DIR}/open-brain-sync/thoughts.json`, `version: 2`.
 - Python merge library: stdlib only (no pip). Tests via `uv run pytest` if the repo has pytest; otherwise `python3 -m pytest` after `uv add --dev pytest` in my_ai_brain, or `python3 -m unittest`.
 - No `git commit` / `git push` unless Travis explicitly asks that turn.
-- Keep `run-container-travis.sh` as an alias to Travis-Mac_Apple.
+- Keep `run-container-travis.sh` and `health-check-travis.sh` as today’s Apple files (not aliases).
+- Do not stub `docs/TRAVIS-MACOS-SETUP.md`.
 
 ## File map
 
 **Create (`my_ai_brain`):**
 
-- `scripts/lib/thoughts_merge.py` — merge + validate envelope
-- `scripts/lib/load-ai-brain-env.sh` — source `~/.config/ai-brain/env` + discover DB container
-- `scripts/brain-sync.sh` — pull / push / status
-- `scripts/install-ai-brain.sh` — host bootstrap
-- `tests/test_thoughts_merge.py` — unit tests
-- `docs/MULTI-MACHINE.md`, `docs/TROUBLESHOOTING.md`
-- `docs/hosts/TRAVIS-MAC-APPLE.md`, `docs/hosts/TRAVIS-MAC-INTEL.md`, `docs/hosts/TRAVIS-FEDORA.md`
+- `scripts/lib/thoughts_merge.py`, `scripts/lib/load-ai-brain-env.sh`, `scripts/brain-sync.sh`
+- `scripts/install-ai-brain.sh`
+- `scripts/ensure-ai-brain-services-travis-mac-intel.sh`, `start-ai-brain-travis-mac-intel.sh`, `verify-travis-mac-intel.sh`, `cursor-hook-ensure-services-travis-mac-intel.sh`
+- `scripts/ensure-ai-brain-services-travis-fedora.sh`, `start-ai-brain-travis-fedora.sh`, `verify-travis-fedora.sh`, `cursor-hook-ensure-services-travis-fedora.sh`
+- `scripts/cursor-hook-brain-sync.sh` (optional; not wired on Apple in v1)
+- `tests/test_thoughts_merge.py`
+- `docs/MULTI-MACHINE.md`, `docs/TROUBLESHOOTING.md`, `docs/hosts/TRAVIS-MAC-APPLE.md`, `docs/hosts/TRAVIS-MAC-INTEL.md`, `docs/hosts/TRAVIS-FEDORA.md`
 
-**Modify (`my_ai_brain`):** `scripts/backup.sh`, `restore.sh`, `verify.sh`, `ensure-ai-brain-services.sh`, `cursor-hook-backup.sh`, `cursor-hook-ensure-services.sh`, `README.md`
+**Do not modify (`my_ai_brain` v1):** `scripts/backup.sh`, `restore.sh`, `verify.sh`, `ensure-ai-brain-services.sh`, `start-ai-brain.sh`, `cursor-hook-backup.sh`, `cursor-hook-ensure-services.sh`
 
-**Create (`agentic-os-dashboard`):** `run-container-travis-mac-apple.sh`, `run-container-travis-mac-intel.sh`, `run-container-travis-fedora.sh`, `scripts/health-check.sh`, `docs/TRAVIS-MAC-APPLE.md`, `docs/TRAVIS-MAC-INTEL.md`, `docs/TRAVIS-FEDORA.md`
+**Modify (`my_ai_brain`):** `README.md` Multi-Machine section only (describe freeze-Apple + shared `brain-sync`)
 
-**Modify (`agentic-os-dashboard`):** `run-container-travis.sh` (alias), `scripts/health-check-travis.sh` (alias), `docs/PORTABLE-SETUP.md`, `docs/TRAVIS-MACOS-SETUP.md` (stub), `backup-scripts/brain-snapshot-backup.sh`, `backup-scripts/brain-snapshot-backup.env.example`, `backup-scripts/README.md`
+**Create (`agentic-os-dashboard`):** `run-container-travis-mac-intel.sh`, `run-container-travis-fedora.sh`, `scripts/health-check-travis-mac-intel.sh`, `scripts/health-check-travis-fedora.sh`, `docs/TRAVIS-MAC-APPLE.md` (pointer), `docs/TRAVIS-MAC-INTEL.md`, `docs/TRAVIS-FEDORA.md`
+
+**Do not modify (`agentic-os-dashboard` v1):** `run-container-travis.sh`, `scripts/health-check-travis.sh`, `docs/TRAVIS-MACOS-SETUP.md` body (may add a one-line “also see TRAVIS-MAC-APPLE.md” at the top only if needed)
+
+**Modify (`agentic-os-dashboard`):** `docs/PORTABLE-SETUP.md` index, `backup-scripts/*` additive `OPENBRAIN_MODE=local`
 
 ---
 
@@ -432,107 +441,109 @@ Expected: `only-local=0`; vault `thought_count` equals local count.
 
 ---
 
-### Task 4: Point backup/restore/hooks at union-merge
+### Task 4: Apple regression gate (no live-script edits)
 
-**Files:**
-
-- Modify: `scripts/backup.sh`
-- Modify: `scripts/restore.sh`
-- Modify: `scripts/cursor-hook-backup.sh`
-- Modify: `scripts/cursor-hook-ensure-services.sh`
+**Files:** none (read-only)
 
 **Interfaces:**
 
-- Consumes: `brain-sync.sh`
-- Produces: same CLI names so existing docs/hooks keep working
+- Consumes: existing Apple stack
+- Produces: proof M3 still works after Tasks 1–3 land as *new* files only
 
-- [ ] **Step 1: Replace `backup.sh` body** with:
-
-```bash
-#!/usr/bin/env bash
-set -euo pipefail
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-exec "$SCRIPT_DIR/brain-sync.sh" push "$@"
-```
-
-- [ ] **Step 2: Replace `restore.sh` body** with:
+- [ ] **Step 1: Confirm Apple live files are unmodified**
 
 ```bash
-#!/usr/bin/env bash
-set -euo pipefail
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-exec "$SCRIPT_DIR/brain-sync.sh" pull "$@"
+cd /Users/travis/Github/my_ai_brain
+git diff -- scripts/ensure-ai-brain-services.sh scripts/start-ai-brain.sh \
+  scripts/backup.sh scripts/restore.sh scripts/verify.sh \
+  scripts/cursor-hook-ensure-services.sh scripts/cursor-hook-backup.sh
+cd /Users/travis/Github/agentic-os-dashboard
+git diff -- run-container-travis.sh scripts/health-check-travis.sh
 ```
 
-- [ ] **Step 3: `cursor-hook-backup.sh`**
+Expected: empty diffs for those paths.
 
-```bash
-#!/usr/bin/env bash
-set -uo pipefail
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-exec "$SCRIPT_DIR/brain-sync.sh" --hook push
-```
-
-- [ ] **Step 4: `cursor-hook-ensure-services.sh`**
-
-```bash
-#!/usr/bin/env bash
-set -euo pipefail
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO="${MY_AI_BRAIN_REPO:-$SCRIPT_DIR/..}"
-"${REPO}/scripts/ensure-ai-brain-services.sh" --hook
-"${REPO}/scripts/brain-sync.sh" --hook pull || true
-```
-
-Keep ensure-hook JSON-on-stdout behavior: pull must not print non-JSON on stdout in `--hook` mode (log to `LOG_DIR`).
-
----
-
-### Task 5: Portable `ensure-ai-brain-services.sh` + `verify.sh`
-
-**Files:**
-
-- Modify: `scripts/ensure-ai-brain-services.sh`
-- Modify: `scripts/verify.sh`
-
-**Interfaces:**
-
-- Consumes: `load-ai-brain-env.sh`
-- Produces: start Ollama, all `supabase_*`, dashboard via `AGENTIC_OS_CONTAINER_SCRIPT` or `run-container-travis-${host}.sh`
-
-- [ ] **Step 1: Replace hardcoded names**
-
-In `ensure-ai-brain-services.sh`:
-
-- `LOG_FILE="${LOG_DIR}/ensure-ai-brain-services.log"` after sourcing loader
-- `services_healthy`: Kong = first `podman ps --filter name=supabase_kong` (not `supabase_kong_travis`)
-- `resolve_dashboard_script`: prefer `$AGENTIC_OS_CONTAINER_SCRIPT`, then `$AGENTIC_OS_REPO/run-container-${AI_BRAIN_HOST}.sh` mapping:
-  - `travis-mac-apple` → `run-container-travis-mac-apple.sh` then `run-container-travis.sh`
-  - `travis-mac-intel` → `run-container-travis-mac-intel.sh`
-  - `travis-fedora` → `run-container-travis-fedora.sh`
-- Darwin-only: `podman machine start`; Linux skip
-- Darwin-only: `launchctl kickstart`; Linux: `systemctl --user start agentic-os-dashboard.service` if unit exists, else warn
-
-- [ ] **Step 2: `verify.sh`**
-
-- Source loader
-- MCP `node_modules` check: `"$MY_AI_BRAIN_REPO/mcp-server/node_modules"`
-- DB container from `$DB_CONTAINER`
-- Add check: `open-brain-sync` parent dir writable if `VAULT_DIR` set
-- Add check: `python3 -c "import thoughts_merge"` via `PYTHONPATH=$MY_AI_BRAIN_REPO/scripts/lib`
-
-- [ ] **Step 3: Run on Travis-Mac_Apple**
+- [ ] **Step 2: Run existing Apple health**
 
 ```bash
 ~/start-ai-brain.sh --check-only
-/Users/travis/Github/my_ai_brain/scripts/verify.sh
+/Users/travis/Github/agentic-os-dashboard/scripts/health-check-travis.sh --quick
 ```
 
-Expected: all OK; no references to missing `_travis` names if containers use that name still (discovery should still find them).
+Expected: same pass/fail character as before this project (not a new portable `health-check.sh`).
+
+- [ ] **Step 3: Optional `brain-sync status` only** (after Task 3). Do not `push` until Travis confirms. Do not edit `hooks.json`.
 
 ---
 
-### Task 6: `install-ai-brain.sh`
+### Task 4b: SKIPPED (do not wrap Apple backup/restore/hooks)
+
+Do **not** replace `backup.sh`, `restore.sh`, `cursor-hook-backup.sh`, or `cursor-hook-ensure-services.sh`. Those stay dump-replace / Apple ensure. Sync is `brain-sync.sh` only.
+
+---
+
+### Task 5: Travis-Mac-Intel + Travis-Fedora ensure/start/verify
+
+**Files:**
+
+- Create: `scripts/ensure-ai-brain-services-travis-mac-intel.sh`
+- Create: `scripts/start-ai-brain-travis-mac-intel.sh`
+- Create: `scripts/verify-travis-mac-intel.sh`
+- Create: `scripts/cursor-hook-ensure-services-travis-mac-intel.sh`
+- Create: `scripts/ensure-ai-brain-services-travis-fedora.sh`
+- Create: `scripts/start-ai-brain-travis-fedora.sh`
+- Create: `scripts/verify-travis-fedora.sh`
+- Create: `scripts/cursor-hook-ensure-services-travis-fedora.sh`
+
+**Interfaces:**
+
+- Consumes: `load-ai-brain-env.sh`, `brain-sync.sh`, host dashboard wrapper
+- Produces: host start path that never execs Apple `ensure-ai-brain-services.sh`
+
+- [ ] **Step 1: Intel ensure script** — copy *structure* of Apple `ensure-ai-brain-services.sh` into a **new** file. Differences required:
+  - PATH prepend `/usr/local/bin` then `/opt/homebrew/bin`
+  - `podman machine start` (Darwin)
+  - Discover `supabase_db*` / `supabase_kong*` (do not hardcode `_travis`)
+  - Dashboard recreate via `$AGENTIC_OS_REPO/run-container-travis-mac-intel.sh` only
+  - `LOG_DIR="${HOME}/Library/Logs"`
+  - After healthy start (non-hook): `"$SCRIPT_DIR/brain-sync.sh" pull` (stderr only)
+  - Hook mode: JSON on stdout unchanged pattern; `brain-sync --hook pull` logs to `LOG_DIR`, not stdout
+
+- [ ] **Step 2: Intel start + verify + hook wrappers**
+
+`start-ai-brain-travis-mac-intel.sh`:
+
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+exec "$SCRIPT_DIR/ensure-ai-brain-services-travis-mac-intel.sh" "$@"
+```
+
+`cursor-hook-ensure-services-travis-mac-intel.sh` execs the Intel ensure with `--hook` only (do not call Apple ensure).
+
+`verify-travis-mac-intel.sh`: copy Apple `verify.sh` checks but `MY_AI_BRAIN_REPO` from env, `node_modules` under that repo, DB discovery, plus `PYTHONPATH=.../scripts/lib` import of `thoughts_merge`.
+
+- [ ] **Step 3: Fedora ensure script** — **new file**, not Intel with `if linux`:
+  - No `podman machine`
+  - No `launchctl`; optional `systemctl --user start agentic-os-dashboard.service`
+  - `LOG_DIR="${HOME}/.local/state/ai-brain"`
+  - Dashboard wrapper `run-container-travis-fedora.sh`
+  - Then `brain-sync pull` as Intel
+  - Matching `start-ai-brain-travis-fedora.sh`, `verify-travis-fedora.sh`, `cursor-hook-ensure-services-travis-fedora.sh`
+
+- [ ] **Step 4: Do not run Intel/Fedora ensure on the M3** except syntax check:
+
+```bash
+bash -n /Users/travis/Github/my_ai_brain/scripts/ensure-ai-brain-services-travis-mac-intel.sh
+bash -n /Users/travis/Github/my_ai_brain/scripts/ensure-ai-brain-services-travis-fedora.sh
+```
+
+Expected: no output, exit 0.
+
+---
+
+### Task 6: `install-ai-brain.sh` (Intel/Fedora only)
 
 **Files:**
 
@@ -540,24 +551,23 @@ Expected: all OK; no references to missing `_travis` names if containers use tha
 
 - [ ] **Step 1: Implement installer**
 
-Flags: `--host=travis-mac-apple|travis-mac-intel|travis-fedora`, `--vault=`, `--yes`
+Flags: `--host=travis-mac-intel|travis-fedora`, `--vault=`, `--yes`, `--force`
 
 Behavior:
 
-1. Validate `--host` against the three values.
-2. `--vault` required; `test -d` and (`hot.md` or `AI Brain/hot.md`).
-3. Write `~/.config/ai-brain/env` with `AI_BRAIN_HOST`, `VAULT_DIR`, `MY_AI_BRAIN_REPO` (repo of this script), `LOG_DIR` default by OS.
-4. `chmod 600` the env file.
-5. `mkdir -p "$VAULT_DIR/open-brain-sync"`
-6. `ln -sf "$MY_AI_BRAIN_REPO/scripts/start-ai-brain.sh" "$HOME/start-ai-brain.sh"`
-7. `(cd "$MY_AI_BRAIN_REPO/mcp-server" && npm install)`
-8. Print next commands including dashboard bridge with the **same** `--vault`.
+1. If `--host=travis-mac-apple`: write `~/.config/ai-brain/env` only with `--force`; **refuse** to change `~/start-ai-brain.sh` or `hooks.json`; print “Apple stack is frozen; use brain-sync.sh manually.”
+2. For intel/fedora: `--vault` required; `test -d` and (`hot.md` or `AI Brain/hot.md`).
+3. Write `~/.config/ai-brain/env`; `chmod 600`.
+4. `mkdir -p "$VAULT_DIR/open-brain-sync"`
+5. `ln -sf` host start script to `$HOME/start-ai-brain.sh` (`start-ai-brain-travis-mac-intel.sh` or `start-ai-brain-travis-fedora.sh`) — **never** Apple `start-ai-brain.sh` on those hosts.
+6. `npm install` in `mcp-server`.
+7. Print `setup-cursor-bridge.sh --vault … --memory-backend open-brain --brain-read-gate` and the host dashboard wrapper name.
 
-Do not write `mcp.json` keys here (per-instance Supabase secret).
+Do not write `mcp.json` keys.
 
-- [ ] **Step 2: Dry-run on Apple (do not overwrite env without Travis)**
+- [ ] **Step 2: Refuse to run full Intel install on Apple by default**
 
-First implementation should skip writing if `~/.config/ai-brain/env` exists unless `--force`.
+If `uname -m` is `arm64` and `--host=travis-mac-intel`, warn and require `--yes`. Do not overwrite Apple `~/start-ai-brain.sh` unless `--host` is intel/fedora **and** Travis is on that machine.
 
 ---
 
@@ -565,91 +575,46 @@ First implementation should skip writing if `~/.config/ai-brain/env` exists unle
 
 **Files:**
 
-- Create: `docs/MULTI-MACHINE.md`
-- Create: `docs/TROUBLESHOOTING.md`
-- Create: `docs/hosts/TRAVIS-MAC-APPLE.md`
-- Create: `docs/hosts/TRAVIS-MAC-INTEL.md`
-- Create: `docs/hosts/TRAVIS-FEDORA.md`
-- Modify: `README.md` (Multi-Machine Sync section — replace dump/restore wording with UUID union-merge)
+- Create: `docs/MULTI-MACHINE.md`, `docs/TROUBLESHOOTING.md`
+- Create: `docs/hosts/TRAVIS-MAC-APPLE.md`, `docs/hosts/TRAVIS-MAC-INTEL.md`, `docs/hosts/TRAVIS-FEDORA.md`
+- Modify: `README.md` Multi-Machine Sync section only
+- Modify: `docs/HOW-IT-WORKS.md` backup diagram to union-merge (prose/docs only)
 
-**Interfaces:** Prose only. Copy rules and topology from the spec. Every host file starts with the display name + `AI_BRAIN_HOST`.
+- [ ] **Step 1: `docs/MULTI-MACHINE.md`** — topology, host table, freeze-Apple rule, shared `brain-sync` only, envelope v2, what does not sync, LiveSync empty-file rule, pointers to host docs.
 
-- [ ] **Step 1: Write `docs/MULTI-MACHINE.md`** with these sections exactly:
+- [ ] **Step 2: `docs/hosts/TRAVIS-MAC-APPLE.md`** — frozen live commands (`~/start-ai-brain.sh`, `run-container-travis.sh`, `health-check-travis.sh`); manual `brain-sync`; sibling `agentic-os-dashboard/docs/TRAVIS-MACOS-SETUP.md` (still the operational runbook) and `docs/TRAVIS-MAC-APPLE.md` pointer. **Do not** say `run-container-travis.sh` is an alias.
 
-1. Title: My AI Brain — Multi-machine sync (Travis)
-2. Topology diagram (spec architecture)
-3. Host table (three Travis names)
-4. UUID union-merge (push/pull/status)
-5. Envelope path and version 2 schema
-6. What does not sync
-7. Session hooks
-8. LiveSync empty-file rule
-9. Pointers to `docs/hosts/TRAVIS-*.md` and dashboard `docs/TRAVIS-*.md`
+- [ ] **Step 3: `docs/hosts/TRAVIS-MAC-INTEL.md`** — **Travis-Mac-Intel**; `/usr/local`; `podman machine`; git ≥ 2.42; named Intel scripts; `$VAULT_DIR`; sibling dashboard Intel doc.
 
-- [ ] **Step 2: Write `docs/hosts/TRAVIS-MAC-APPLE.md`**
+- [ ] **Step 4: `docs/hosts/TRAVIS-FEDORA.md`** — title contains **Travis-Fedora**; native Podman; systemd; `LOG_DIR=~/.local/state/ai-brain`; named Fedora scripts; sibling dashboard Fedora doc.
 
-Must include: this is the current M3 daily driver; vault `/Users/travis/Documents/MBP-M3-RH/Obsidian-Work-Vault/Obsidian-Work`; `~/start-ai-brain.sh`; LaunchAgents; sleepwatcher; `run-container-travis.sh` alias; health-check command; sibling dashboard doc `agentic-os-dashboard/docs/TRAVIS-MAC-APPLE.md`.
+- [ ] **Step 5: `docs/TROUBLESHOOTING.md`** — include: Apple vs Intel vs Fedora start commands; `brain-sync` drift; do not run Fedora ensure on Apple; `supabase_db_travis` is Apple-only.
 
-- [ ] **Step 3: Write `docs/hosts/TRAVIS-MAC-INTEL.md`**
-
-Must include: **Travis-Mac-Intel**; Homebrew `/usr/local`; `podman machine`; git ≥ 2.42 / stale `/usr/local/bin/git`; headroom x86_64; vault path filled at install (`$VAULT_DIR`); no copied M3 paths as required values; sleepwatcher optional; LaunchAgents; sibling dashboard doc.
-
-- [ ] **Step 4: Write `docs/hosts/TRAVIS-FEDORA.md`**
-
-Must include the words **Travis-Fedora** in the title and first paragraph; native Podman; `dnf` packages; `LOG_DIR=~/.local/state/ai-brain`; systemd `--user`; SELinux `:z`; no sleepwatcher; Reload Cursor after suspend; sibling `agentic-os-dashboard/docs/TRAVIS-FEDORA.md`.
-
-- [ ] **Step 5: Write `docs/TROUBLESHOOTING.md`** table rows at least:
-
-| Symptom | Hosts | Fix |
-|---------|-------|-----|
-| MCP red after sleep | Apple, Intel | Reload Window; sleepwatcher on macOS |
-| MCP red after reboot | all | `~/start-ai-brain.sh` |
-| `only-vault > 0` | all | `brain-sync pull` |
-| `only-local > 0` | all | `brain-sync push` |
-| thoughts.json 0 bytes | all | do not pull; push from a host with rows; restore snapshot if all DBs wrong |
-| `supabase_db_travis` not found | Intel, Fedora | discovery via `supabase_db`; do not copy Apple name |
-| SELinux vault mount denied | Travis-Fedora | `:z` on volume; `chcon` if needed |
-| `Library/Logs` missing | Travis-Fedora | `LOG_DIR` in env |
-| git trailer error | Intel especially | git ≥ 2.42, remove stale `/usr/local/bin/git` |
-| dashboard memory 503 | all with `open-brain` | expected |
-| Ollama missing nomic-embed-text | all | `podman exec ollama ollama pull nomic-embed-text` |
-
-- [ ] **Step 6: Update README Multi-Machine Sync** to describe union-merge, not replace-dump.
+- [ ] **Step 6: README** — union-merge + freeze-Apple; Apple `backup.sh` remains legacy dump.
 
 ---
 
-### Task 8: Dashboard wrappers + Travis host docs
+### Task 8: Dashboard Intel/Fedora wrappers + Travis host docs
 
 **Files (repo `/Users/travis/Github/agentic-os-dashboard`):**
 
-- Create: `run-container-travis-mac-apple.sh`
-- Modify: `run-container-travis.sh` to exec mac-apple
 - Create: `run-container-travis-mac-intel.sh`
 - Create: `run-container-travis-fedora.sh`
-- Create: `docs/TRAVIS-MAC-APPLE.md` (move content from `TRAVIS-MACOS-SETUP.md`, update names)
-- Replace: `docs/TRAVIS-MACOS-SETUP.md` with a stub pointing at `TRAVIS-MAC-APPLE.md`
+- Create: `docs/TRAVIS-MAC-APPLE.md` (short pointer to `TRAVIS-MACOS-SETUP.md`)
 - Create: `docs/TRAVIS-MAC-INTEL.md`
 - Create: `docs/TRAVIS-FEDORA.md`
-- Modify: `docs/PORTABLE-SETUP.md` intro table of Travis hosts
+- Modify: `docs/PORTABLE-SETUP.md` intro table only
 
-- [ ] **Step 1: Apple wrapper**
+**Do not:** create `run-container-travis-mac-apple.sh`, alias `run-container-travis.sh`, or stub `TRAVIS-MACOS-SETUP.md`.
 
-`run-container-travis-mac-apple.sh` is a copy of current `run-container-travis.sh` (preserve behavior). Then `run-container-travis.sh` becomes:
-
-```bash
-#!/usr/bin/env bash
-set -euo pipefail
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-exec "$SCRIPT_DIR/run-container-travis-mac-apple.sh" "$@"
-```
-
-- [ ] **Step 2: Intel wrapper** — copy `config/run-container-linux.example.sh` pattern but Darwin:
+- [ ] **Step 1: Intel wrapper**
 
 ```bash
 #!/usr/bin/env bash
 # Travis-Mac-Intel — set OBSIDIAN_VAULT_DIR to this machine's LiveSync vault.
 set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+export PATH="${HOME}/.local/bin:/usr/local/bin:/opt/homebrew/bin:${PATH:-}"
 export MEMORY_BACKEND="${MEMORY_BACKEND:-open-brain}"
 export OBSIDIAN_VAULT_DIR="${OBSIDIAN_VAULT_DIR:-}"
 if [[ -z "$OBSIDIAN_VAULT_DIR" ]]; then
@@ -659,74 +624,64 @@ fi
 exec "$SCRIPT_DIR/run-container.sh" "$@"
 ```
 
-After Travis fills the path, hardcode the default like Apple’s wrapper.
+- [ ] **Step 2: Fedora wrapper `run-container-travis-fedora.sh`** — comments say **Travis-Fedora**; SELinux note; empty vault default until install; `AGENTIC_OS_LOOP_WATCHER=1`; **no** `launchctl`.
 
-- [ ] **Step 3: Fedora wrapper `run-container-travis-fedora.sh`**
+- [ ] **Step 3: Docs**
 
-Same as Intel but comments say **Travis-Fedora**, and document SELinux. Default `OBSIDIAN_VAULT_DIR` empty until install. `AGENTIC_OS_LOOP_WATCHER` default 1. Do not set Apple LaunchAgent assumptions.
-
-- [ ] **Step 4: Docs**
-
-`docs/TRAVIS-MAC-APPLE.md`: retitle every “Travis macOS” / MBP-M3-RH setup to **Travis-Mac_Apple**. Keep the existing operational checklists from `TRAVIS-MACOS-SETUP.md`. Add Open Brain sync: `brain-sync` pull on start, push on session end; link `my_ai_brain/docs/hosts/TRAVIS-MAC-APPLE.md`.
-
-`docs/TRAVIS-MACOS-SETUP.md` stub:
+`docs/TRAVIS-MAC-APPLE.md`:
 
 ```markdown
-# Moved
+# Travis-Mac_Apple
 
-This machine’s runbook is **[TRAVIS-MAC-APPLE.md](./TRAVIS-MAC-APPLE.md)** (Travis-Mac_Apple, Apple Silicon M3).
+Display name: **Travis-Mac_Apple** (`travis-mac-apple`). Apple Silicon M3 daily driver.
 
-- Intel Mac: [TRAVIS-MAC-INTEL.md](./TRAVIS-MAC-INTEL.md)
+Operational runbook (unchanged): [TRAVIS-MACOS-SETUP.md](./TRAVIS-MACOS-SETUP.md)
+
+Open Brain sync: manual `my_ai_brain/scripts/brain-sync.sh` — see that repo’s `docs/hosts/TRAVIS-MAC-APPLE.md`.
+
+- Intel: [TRAVIS-MAC-INTEL.md](./TRAVIS-MAC-INTEL.md)
 - Fedora: [TRAVIS-FEDORA.md](./TRAVIS-FEDORA.md)
 ```
 
-`docs/TRAVIS-MAC-INTEL.md` and `docs/TRAVIS-FEDORA.md`: full first-time checklists (podman, node, supabase CLI, clone both repos, `install-ai-brain.sh --host=…`, `setup-cursor-bridge.sh --vault … --memory-backend open-brain --brain-read-gate`, wrapper, verify, health-check). Title must contain **Travis-Mac-Intel** / **Travis-Fedora**.
+`docs/TRAVIS-MAC-INTEL.md` / `docs/TRAVIS-FEDORA.md`: full first-time checklists using **host-specific** script names (`install-ai-brain.sh --host=travis-mac-intel|travis-fedora`, matching wrappers and health-check). Titles must contain **Travis-Mac-Intel** / **Travis-Fedora**.
 
-`PORTABLE-SETUP.md`: first table lists the three Travis docs before generic portable notes.
+`PORTABLE-SETUP.md`: first table lists the three Travis docs; Apple line still points at `TRAVIS-MACOS-SETUP.md` as the live runbook.
 
 ---
 
-### Task 9: Portable health-check + sync drift
+### Task 9: Host-specific health-check copies (do not alias Apple)
 
 **Files:**
 
-- Create: `scripts/health-check.sh` in agentic-os-dashboard
-- Modify: `scripts/health-check-travis.sh` to exec it
-- Modify: `~/.cursor/skills/cursor-os/health-check/SKILL.md` Memory Layer section (via dashboard manage API / skill_patch — do **not** raw `cp` into `~/.cursor/skills`)
+- Create: `scripts/health-check-travis-mac-intel.sh`
+- Create: `scripts/health-check-travis-fedora.sh`
 
-- [ ] **Step 1: Extract `health-check-travis.sh` into `health-check.sh`**
+**Do not:** create `scripts/health-check.sh`, modify `health-check-travis.sh`, or `skill_patch` the Apple health-check skill.
 
-Keep all existing Apple checks. Parameterize:
+- [ ] **Step 1: Intel health-check** — copy `health-check-travis.sh` to the new filename. Change:
+  - Banner text **Travis-Mac-Intel**
+  - Wrapper check: `run-container-travis-mac-intel.sh` not `run-container-travis.sh`
+  - PATH `/usr/local/bin` first
+  - git ≥ 2.42 warning (Intel stale git)
+  - Section **Open Brain sync**: run `brain-sync status`; fail if thoughts.json is 0 bytes
+  - Memory API 503 still pass for `open-brain`
 
-- Wrapper script name from `AGENTIC_OS_CONTAINER_SCRIPT` / host
-- LaunchAgent section: skip unless `uname` is Darwin
-- systemd section: if Linux, `systemctl --user is-active agentic-os-dashboard.service` (warn if missing)
-- `KB_DIR` parse: do not regex only `/Users`; allow `/home`
-- New section **Open Brain sync**:
-  - if `OPEN_BRAIN_SYNC_JSON` or `$VAULT_DIR/open-brain-sync/thoughts.json` exists
-  - fail if size 0
-  - run `"$MY_AI_BRAIN_REPO/scripts/brain-sync.sh" status` and warn on `only-vault`/`only-local` if the CLI prints those tokens
-- Memory API: keep 503 as **pass** for `MEMORY_BACKEND=open-brain`
+- [ ] **Step 2: Fedora health-check** — copy Intel or Apple and adapt:
+  - Banner **Travis-Fedora**
+  - No `launchctl` section; systemd `--user` instead
+  - `KB_DIR` parse must allow `/home`
+  - Wrapper `run-container-travis-fedora.sh`
+  - `brain-sync status` section
+  - Skip Apple-only git `/usr/local/bin/git` trailer note or keep as warn-if-present
 
-- [ ] **Step 2: Alias**
-
-```bash
-#!/usr/bin/env bash
-exec "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/health-check.sh" "$@"
-```
-
-in `health-check-travis.sh`.
-
-- [ ] **Step 3: Run on Travis-Mac_Apple**
+- [ ] **Step 3: On Apple, still run the old command**
 
 ```bash
 cd /Users/travis/Github/agentic-os-dashboard
-./scripts/health-check.sh --quick
+./scripts/health-check-travis.sh --quick
 ```
 
-Expected: existing passes plus sync section (warn until first v2 push).
-
-- [ ] **Step 4: Patch health-check skill Memory Layer** via dashboard `skill_patch` so SQLite UNREACHABLE/503 is not a failure when `MEMORY_BACKEND=open-brain`; probe Open Brain REST instead. Do not `cp` into `~/.cursor/skills`.
+Expected: unchanged script. Do not run the Intel/Fedora copies as the Apple daily check.
 
 ---
 
@@ -734,56 +689,40 @@ Expected: existing passes plus sync section (warn until first v2 push).
 
 **Files:**
 
-- Modify: `backup-scripts/brain-snapshot-backup.sh`
+- Modify: `backup-scripts/brain-snapshot-backup.sh` (additive mode only)
 - Modify: `backup-scripts/brain-snapshot-backup.env.example`
 - Modify: `backup-scripts/README.md`
 
-- [ ] **Step 1: Add mode**
+Keep `OPENBRAIN_MODE` default **`ssh`** (hal9k). Do not change Apple cron unless Travis asks.
 
-`OPENBRAIN_MODE="${OPENBRAIN_MODE:-ssh}"` for backward compatibility with hal9k.
+- [ ] **Step 1:** When `OPENBRAIN_MODE=local`: `podman exec "$DB_CONTAINER" pg_dump` on this host; thoughts JSON with IDs; comments for Travis-Mac_Apple / Intel / Fedora.
 
-When `OPENBRAIN_MODE=local`:
+- [ ] **Step 2:** Restore drill uses `brain-sync pull` with `OPEN_BRAIN_SYNC_JSON=` override.
 
-- `DB_CONTAINER` from env or podman discovery
-- `pg_dump` via `podman exec "$DB_CONTAINER"` (no SSH)
-- thoughts JSON via the same dump shape as `brain-sync` (ids preserved)
-- Example env comments for **Travis-Mac_Apple**, **Travis-Mac-Intel**, **Travis-Fedora** (user-level launchd/cron or systemd timer; do not require root SSH)
-
-- [ ] **Step 2: Document restore drill** in README using `OPEN_BRAIN_SYNC_JSON=/path/from/snapshot/thoughts.json brain-sync pull`
-
-- [ ] **Step 3: Add example `brain-snapshot-backup.env` snippets** named in comments:
-
-```
-# Travis-Mac_Apple (local Supabase)
-OPENBRAIN_MODE=local
-VAULT_DIR=/Users/travis/Documents/MBP-M3-RH/Obsidian-Work-Vault/Obsidian-Work
-BACKUP_USER=travis
-
-# Travis-Mac-Intel — set VAULT_DIR to that host's LiveSync path
-# Travis-Fedora — LOG/SNAPSHOT on Linux paths; OPENBRAIN_MODE=local
-```
+- [ ] **Step 3:** Example env snippets named **Travis-Mac_Apple**, **Travis-Mac-Intel**, **Travis-Fedora**.
 
 ---
 
-### Task 11: Wire start-ai-brain pull + README verify
+### Task 11: Optional Apple sync hook (new file only, not wired)
 
 **Files:**
 
-- Modify: `scripts/ensure-ai-brain-services.sh` `main()` after successful start: if not `--hook` and not `--check-only`, run `brain-sync.sh pull` then `status` to stderr
-- Modify: `docs/HOW-IT-WORKS.md` backup diagram to union-merge
-- Modify: `docs/USAGE.md` if it mentions replace-dump restore
+- Create: `scripts/cursor-hook-brain-sync.sh`
 
-- [ ] **Step 1:** Non-hook `start-ai-brain.sh` path pulls after health.
-- [ ] **Step 2:** Update HOW-IT-WORKS “Backup & Sync Flow” to UUID union, not replace.
-- [ ] **Step 3:** Re-run `verify.sh` and `health-check.sh --quick` on Travis-Mac_Apple.
+- [ ] **Step 1:** New hook script: `--hook pull` on sessionStart-compatible JSON-empty success; push on sessionEnd. Logs to Apple `~/Library/Logs` or `LOG_DIR`.
+
+- [ ] **Step 2:** Document in Apple host doc: **not** added to `~/.cursor/hooks.json` until Travis asks. Installing Intel/Fedora must not edit the M3 `hooks.json`.
+
+- [ ] **Step 3:** Do **not** modify `ensure-ai-brain-services.sh` or Apple `start-ai-brain.sh`.
 
 ---
 
 ### Task 12: Spec self-check after implementation (future session)
 
-- [ ] Grep rewritten scripts for `MBP-M3-RH`, `supabase_db_travis`, `Library/Logs` — allowed only in **Apple host docs** and env **examples**, not in generic script defaults.
-- [ ] Confirm three dashboard docs and three my_ai_brain host docs exist with Travis names.
-- [ ] Confirm merge tests still pass.
+- [ ] `git diff` on the frozen Apple file list is empty (except README/docs/HOW-IT-WORKS if those were allowed).
+- [ ] Intel/Fedora scripts exist and `bash -n` clean; they do not `source`/`exec` Apple `ensure-ai-brain-services.sh`.
+- [ ] Merge tests pass.
+- [ ] Three host docs in both repos; `TRAVIS-MACOS-SETUP.md` still a full runbook, not a stub.
 - [ ] Do not commit or push unless Travis asks.
 
 ---
@@ -795,9 +734,10 @@ Do **not** use git worktrees. Edit the real clones:
 - `/Users/travis/Github/my_ai_brain`
 - `/Users/travis/Github/agentic-os-dashboard`
 
-Suggested order: Tasks 1 → 5 on Apple first (no data loss on this machine), then Task 3 first push with Travis watching LiveSync, then docs (7–8), then health-check/snapshots (9–10).
+Suggested order: Tasks 1–3 (shared merge + `brain-sync`) → Task 4 Apple regression gate → Task 3 first **push** only with Travis watching → Tasks 5–9 Intel/Fedora scripts and docs → Task 10 snapshots → Task 11 leftover hook file.
 
 **Two execution options when Travis says to implement:**
 
 1. **Subagent-Driven (recommended)** — fresh subagent per task, review between tasks
 2. **Inline Execution** — executing-plans in one session with checkpoints
+
