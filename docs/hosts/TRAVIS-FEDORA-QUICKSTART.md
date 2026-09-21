@@ -110,6 +110,8 @@ npm install -g supabase
 supabase --version
 ```
 
+Observed on this host 2026-09-21: **2.117.0**. Any current 2.x CLI is fine for local `supabase start`.
+
 Alternatively install a release binary into `~/.local/bin` from https://github.com/supabase/cli/releases.
 
 ---

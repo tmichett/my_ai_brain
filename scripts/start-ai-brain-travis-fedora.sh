@@ -2,7 +2,14 @@
 # Travis-Fedora: start AI Brain + Agentic OS Podman containers if down.
 set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Resolve ~/start-ai-brain.sh → scripts/ so sibling ensure is found.
+SOURCE="${BASH_SOURCE[0]}"
+while [[ -L "$SOURCE" ]]; do
+  _dir="$(cd "$(dirname "$SOURCE")" && pwd)"
+  SOURCE="$(readlink "$SOURCE")"
+  [[ "$SOURCE" != /* ]] && SOURCE="${_dir}/${SOURCE}"
+done
+SCRIPT_DIR="$(cd "$(dirname "$SOURCE")" && pwd)"
 ENSURE="${SCRIPT_DIR}/ensure-ai-brain-services-travis-fedora.sh"
 
 usage() {

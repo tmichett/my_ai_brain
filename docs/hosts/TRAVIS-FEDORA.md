@@ -25,6 +25,10 @@ Sibling dashboard runbook: [`agentic-os-dashboard/docs/TRAVIS-FEDORA.md`](../../
 | Config | `~/.config/ai-brain/env` |
 | Dashboard data | `~/.local/share/agentic-os-dashboard/` |
 | Vault root | `/home/travis/Obsidian/obsidian-work/obsidian-work` |
+| LAN IPv4 | `192.168.14.201` (observed 2026-09-21) |
+| Supabase CLI | `2.117.0` (observed 2026-09-21) |
+
+Open Brain on this host is **localhost only**: `http://127.0.0.1:54321` and `http://127.0.0.1:11434`. Do **not** point Apple Cursor at `192.168.14.201:54321`. After `run-container-travis-fedora.sh`, the dashboard is reachable from the LAN at `http://192.168.14.201:3888` (`DASHBOARD_BIND` defaults to `0.0.0.0`).
 
 LiveSync is **already working**. Same vault as Travis-Mac_Apple; only the host path differs:
 
