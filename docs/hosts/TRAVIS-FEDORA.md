@@ -30,6 +30,24 @@ Sibling dashboard runbook: [`agentic-os-dashboard/docs/TRAVIS-FEDORA.md`](../../
 
 Open Brain on this host is **localhost only**: `http://127.0.0.1:54321` and `http://127.0.0.1:11434`. Do **not** point Apple Cursor at `192.168.14.201:54321`. After `run-container-travis-fedora.sh`, the dashboard is reachable from the LAN at `http://192.168.14.201:3888` (`DASHBOARD_BIND` defaults to `0.0.0.0`).
 
+**Firewall:** Fedora firewalld blocks 3888 until you open it. For remote dashboard access:
+
+```bash
+sudo firewall-cmd --permanent --add-port=3888/tcp
+sudo firewall-cmd --reload
+```
+
+Do **not** open Open Brain ports (`54321`, `11434`) on the LAN. Full note: `~/Github/agentic-os-dashboard/docs/TRAVIS-FEDORA.md`.
+
+**Jira + Calendar** are not part of Open Brain. On Fedora they start unconfigured. Scaffold + fill per-host env (do not copy Apple files):
+
+```bash
+cd ~/Github/agentic-os-dashboard
+./scripts/setup-jira-calendar-travis-fedora.sh
+```
+
+Details: dashboard `docs/TRAVIS-FEDORA.md` section **Jira + Google Calendar**.
+
 LiveSync is **already working**. Same vault as Travis-Mac_Apple; only the host path differs:
 
 | Host | Vault root |

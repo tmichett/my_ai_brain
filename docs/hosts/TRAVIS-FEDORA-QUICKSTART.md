@@ -22,7 +22,7 @@ You still need the **Fedora-first scripts** in those clones (`brain-sync.sh`, `*
 ## Do not
 
 - Do **not** run Apple scripts: `ensure-ai-brain-services.sh`, Apple `start-ai-brain.sh`, `run-container-travis.sh`, `health-check-travis.sh`, `cursor-hook-ensure-services.sh`.
-- Do **not** copy Apple’s `SUPABASE_SERVICE_ROLE_KEY`, dashboard `secret`, or `runs.db`.
+- Do **not** copy Apple’s `SUPABASE_SERVICE_ROLE_KEY`, dashboard `secret`, `runs.db`, `jira.env`, `google-calendar.env`, or Google Calendar token JSON.
 - Do **not** use `backup.sh` / `restore.sh` as the multi-machine sync.
 - Do **not** pass the nested notebook folder as `--vault`:
 
@@ -252,6 +252,38 @@ Confirm the container can read vault root (not the nested folder):
 podman exec agentic-os-dashboard test -r /data/vault/hot.md && echo "vault mount:ok"
 ```
 
+**LAN / remote UI:** firewalld must allow **TCP 3888** or other machines cannot reach `http://192.168.14.201:3888`. Local Cursor still uses `127.0.0.1:3888`.
+
+```bash
+sudo firewall-cmd --permanent --add-port=3888/tcp
+sudo firewall-cmd --reload
+```
+
+Do **not** open `54321` / `11434` for LAN. Details: dashboard `docs/TRAVIS-FEDORA.md`.
+
+---
+
+## Step 6b — Jira + Google Calendar (dashboard)
+
+Open Brain can be healthy while **`/jira` and `/calendar` are still empty** on Fedora. Those use **per-host** files. Do not scp Apple’s copies.
+
+```bash
+cd /home/travis/Github/agentic-os-dashboard
+chmod +x scripts/setup-jira-calendar-travis-fedora.sh
+./scripts/setup-jira-calendar-travis-fedora.sh
+```
+
+Edit `~/.local/share/agentic-os-dashboard/jira.env` (Atlassian URL, email, API token — type the same token as Apple) and `google-calendar.env` (OAuth client). On the Google Cloud OAuth client, add redirect URIs for both localhost and LAN:
+
+```
+http://localhost:3888/api/calendar/oauth/callback
+http://192.168.14.201:3888/api/calendar/oauth/callback
+```
+
+Set `GOOGLE_REDIRECT_URI` to the URL you will actually open when clicking **Connect**. Recreate the container, then open `/jira` and `/calendar` → Connect (or Reconnect for write). Full note: dashboard [TRAVIS-FEDORA.md](../../../agentic-os-dashboard/docs/TRAVIS-FEDORA.md).
+
+Cursor `jira-mcp` is optional and separate; dashboard `/jira` does not need it.
+
 ---
 
 ## Step 7 — Fedora sessionStart hook
@@ -362,6 +394,8 @@ Later, Apple `brain-sync pull` should pick that UUID up.
 | No `supabase_*` containers | `cd ~/supabase-ai-brain && supabase start` |
 | Open Brain MCP red | `npm run build` in `mcp-server`; `/usr/bin/node`; **this** host’s `sb_secret`; Reload Window |
 | Dashboard cannot read `hot.md` | Recreate with `./run-container-travis-fedora.sh` (SELinux `:z`) |
+| LAN browser cannot open `:3888` | `sudo firewall-cmd --permanent --add-port=3888/tcp && sudo firewall-cmd --reload` (do not open Open Brain ports) |
+| `/jira` setup banner / `/calendar` never Connects | Per-host env missing. `./scripts/setup-jira-calendar-travis-fedora.sh`, fill tokens, recreate container. Do not copy Apple’s env files. |
 | `thoughts.json` is 0 bytes | Do **not** pull. Push from a host that still has rows (usually Apple) |
 | After sleep, MCP red | Reload Window |
 
