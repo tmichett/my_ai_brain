@@ -47,6 +47,8 @@ if [[ -x /usr/local/bin/node ]]; then
   NODE=/usr/local/bin/node
 elif [[ -x /opt/homebrew/bin/node ]]; then
   NODE=/opt/homebrew/bin/node
+elif [[ -x /usr/bin/node ]]; then
+  NODE=/usr/bin/node
 else
   NODE="$(command -v node)" || {
     echo "open-brain MCP: node not found on PATH" >&2

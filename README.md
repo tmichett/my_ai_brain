@@ -124,7 +124,15 @@ Exports thoughts as JSON to the Obsidian vault. Syncs to other machines via Live
 ./scripts/restore.sh [path/to/backup.json]
 ```
 
-Imports thoughts and regenerates embeddings locally. Skips duplicates.
+Imports thoughts and regenerates embeddings locally. Skips duplicates. **Do not use this as the multi-machine sync** — Apple `backup.sh`/`restore.sh` are a legacy dump. Cross-host Open Brain uses UUID union-merge:
+
+```bash
+./scripts/brain-sync.sh status
+./scripts/brain-sync.sh pull    # insert missing ids from vault JSON
+./scripts/brain-sync.sh push    # union vault + local, atomic write
+```
+
+See [docs/MULTI-MACHINE.md](docs/MULTI-MACHINE.md). **Travis-Fedora** install: [docs/hosts/TRAVIS-FEDORA-QUICKSTART.md](docs/hosts/TRAVIS-FEDORA-QUICKSTART.md). Travis-Mac_Apple start scripts are unchanged.
 
 ## Project Structure
 
@@ -143,9 +151,13 @@ my_ai_brain/
 ├── visualizations/       # Standalone Vite apps (browser, no Cursor)
 │   └── course-build-workflow/
 ├── scripts/
-│   ├── backup.sh         # Export thoughts to JSON (for vault sync)
-│   ├── restore.sh        # Import thoughts + regenerate embeddings
-│   ├── verify.sh         # Health check all components
+│   ├── backup.sh         # Legacy dump (Apple); not multi-host sync
+│   ├── restore.sh        # Legacy restore; not multi-host sync
+│   ├── brain-sync.sh     # UUID union-merge via vault thoughts.json
+│   ├── install-ai-brain.sh
+│   ├── ensure-ai-brain-services-travis-fedora.sh
+│   ├── verify.sh         # Apple/generic health check
+│   ├── verify-travis-fedora.sh
 │   ├── setup-canvas-sdk.sh  # Link canvases into Cursor + install type stubs
 │   ├── generate-course-build-workflow-diagram.py  # SVG/PNG for Obsidian
 │   ├── ensure-ai-brain-services.sh  # Start Ollama/Supabase/dashboard if down
