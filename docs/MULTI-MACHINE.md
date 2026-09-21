@@ -25,6 +25,7 @@ Envelope `version` must be **2**. Pull never truncates the local DB if the vault
 
 ## Host docs
 
+- [**Daily checklist (Mac + Fedora)**](hosts/DAILY-CHECKLIST.md) — always-on desk switch (`brain-sync` push/pull; Cursor/Obsidian stay up)
 - [Travis-Fedora **quickstart**](hosts/TRAVIS-FEDORA-QUICKSTART.md) — install this host
 - [Travis-Fedora](hosts/TRAVIS-FEDORA.md) — paths
 - [Travis-Mac_Apple](hosts/TRAVIS-MAC-APPLE.md)

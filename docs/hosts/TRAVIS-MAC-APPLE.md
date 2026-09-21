@@ -12,13 +12,15 @@ cd ~/Github/agentic-os-dashboard && ./run-container-travis.sh
 
 Operational dashboard runbook (unchanged): [`agentic-os-dashboard/docs/TRAVIS-MACOS-SETUP.md`](../../../agentic-os-dashboard/docs/TRAVIS-MACOS-SETUP.md).
 
-Open Brain multi-machine sync is **manual** `brain-sync` (do not wire Apple `hooks.json` to Fedora/Intel ensure scripts):
+Open Brain multi-machine sync is **manual** `brain-sync` (do not wire Apple `hooks.json` to Fedora/Intel ensure scripts). Cursor, Obsidian, and the dashboard usually stay running — see the two-host checklist:
+
+**[DAILY-CHECKLIST.md](DAILY-CHECKLIST.md)** (Mac + Fedora, always-on)
 
 ```bash
 cd ~/Github/my_ai_brain
 ./scripts/brain-sync.sh status
-./scripts/brain-sync.sh push   # when leaving this Mac, LiveSync idle, you watching
-./scripts/brain-sync.sh pull   # when returning, after LiveSync has thoughts.json
+./scripts/brain-sync.sh push   # when leaving this Mac
+./scripts/brain-sync.sh pull   # when sitting down, after LiveSync has thoughts.json
 ```
 
 Apple `backup.sh` remains the **legacy dump**. Do not use it as the three-machine sync.

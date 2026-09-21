@@ -364,12 +364,14 @@ Later, Apple `brain-sync pull` should pick that UUID up.
 
 ## Daily (Fedora)
 
+Always-on Mac + Fedora (Cursor/Obsidian stay up): **[DAILY-CHECKLIST.md](DAILY-CHECKLIST.md)**.
+
 | When | Command |
 |------|---------|
-| After reboot | `~/start-ai-brain.sh` |
-| Health | `~/Github/agentic-os-dashboard/scripts/health-check-travis-fedora.sh --quick` |
 | Leaving Fedora | `~/Github/my_ai_brain/scripts/brain-sync.sh push` |
 | Arriving | Wait for LiveSync, then `brain-sync.sh pull` and `status` |
+| After reboot only | `~/start-ai-brain.sh` |
+| Health (if something is down) | `~/Github/agentic-os-dashboard/scripts/health-check-travis-fedora.sh --quick` |
 
 ---
 
