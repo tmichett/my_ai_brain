@@ -238,11 +238,18 @@ chmod +x run-container-travis-fedora.sh scripts/health-check-travis-fedora.sh
 
 `MEMORY_BACKEND=open-brain` is required. Dashboard `/api/memory/user-model` returning **HTTP 503** is a **pass** (memory lives in Open Brain, not SQLite).
 
-Optional headless runner (skip if you pick up dashboard prompts in Cursor chat):
+### Headless runner (required for UI / LAN RUNs)
+
+Browsing the dashboard from another machine (or clicking RUN in the UI without an open Cursor chat that calls `dashboard_get_pending`) does **not** drain the queue. Install the systemd runner and authenticate:
 
 ```bash
-./scripts/install-agentic-os-systemd.sh --dashboard-only --skip-skills
+# Auth (pick one): CURSOR_API_KEY in ~/.cursor/agentic-os.env  OR  agent login
+./scripts/install-agentic-os-systemd.sh --skip-skills
+./scripts/check-agent-auth.sh
+systemctl --user status agentic-os-agent-runner.service --no-pager
 ```
+
+Do **not** use `--dashboard-only` — that skips the runner and leaves RUNs stuck forever.
 
 Do **not** run `./run-container-travis.sh` on Fedora.
 
@@ -317,7 +324,8 @@ cd /home/travis/Github/my_ai_brain
 ./scripts/verify-travis-fedora.sh
 
 cd /home/travis/Github/agentic-os-dashboard
-./scripts/health-check-travis-fedora.sh --quick
+# Full check — --quick skips runner/auth and can claim "healthy" while RUNs are broken
+./scripts/health-check-travis-fedora.sh
 ```
 
 Open http://127.0.0.1:3888 (token is local `~/.local/share/agentic-os-dashboard/secret`).
@@ -371,7 +379,8 @@ Always-on Mac + Fedora (Cursor/Obsidian stay up): **[DAILY-CHECKLIST.md](DAILY-C
 | Leaving Fedora | `~/Github/my_ai_brain/scripts/brain-sync.sh push` |
 | Arriving | Wait for LiveSync, then `brain-sync.sh pull` and `status` |
 | After reboot only | `~/start-ai-brain.sh` |
-| Health (if something is down) | `~/Github/agentic-os-dashboard/scripts/health-check-travis-fedora.sh --quick` |
+| Health (if something is down) | `~/Github/agentic-os-dashboard/scripts/health-check-travis-fedora.sh` (full; not `--quick` alone) |
+| Runner stuck / auth | `systemctl --user status agentic-os-agent-runner`; `./scripts/check-agent-auth.sh` |
 
 ---
 
@@ -380,7 +389,8 @@ Always-on Mac + Fedora (Cursor/Obsidian stay up): **[DAILY-CHECKLIST.md](DAILY-C
 - [ ] `ls …/obsidian-work/obsidian-work/hot.md` works
 - [ ] `~/start-ai-brain.sh --check-only` exits 0
 - [ ] `verify-travis-fedora.sh` all OK
-- [ ] `health-check-travis-fedora.sh --quick` healthy (memory API **503** is OK)
+- [ ] `health-check-travis-fedora.sh` full check healthy (memory API **503** is OK; runner unit **active** + agent auth **OK**)
+- [ ] `systemctl --user is-active agentic-os-agent-runner.service` → `active`
 - [ ] Cursor MCP: open-brain / obsidian / dashboard green
 - [ ] `podman exec agentic-os-dashboard test -r /data/vault/hot.md`
 - [ ] `thoughts.json` non-zero after Apple push; Fedora `brain-sync status` `only-vault=0`

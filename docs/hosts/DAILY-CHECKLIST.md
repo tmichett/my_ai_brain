@@ -138,7 +138,8 @@ Stacks stay up. Use these **only** after reboot, crash, or MCP/health failure.
 | | Mac | Fedora |
 |--|-----|--------|
 | Stack | `~/start-ai-brain.sh` then `--check-only` | `~/start-ai-brain.sh` then `--check-only` |
-| Health | `~/Github/agentic-os-dashboard/scripts/health-check-travis.sh --quick` | `…/health-check-travis-fedora.sh --quick` |
+| Health | `~/Github/agentic-os-dashboard/scripts/health-check-travis.sh --quick` | `…/health-check-travis-fedora.sh` (full; `--quick` skips runner/auth) |
+| Runner | LaunchAgent `com.agentic-os.agent-runner` | `systemctl --user status agentic-os-agent-runner` |
 | Dashboard recreate | `./run-container-travis.sh` | `./run-container-travis-fedora.sh` |
 | After sleep | Reload Cursor Window (sleepwatcher on Mac) | Reload Cursor Window |
 

@@ -181,10 +181,12 @@ chmod +x run-container-travis-fedora.sh
 ./run-container-travis-fedora.sh
 ```
 
-`run-container.sh` already uses SELinux `:z` on bind mounts. Optional headless runner (skip if Cursor chat pickup is enough):
+`run-container.sh` already uses SELinux `:z` on bind mounts. **Headless runner required** for UI/LAN RUNs (do not use `--dashboard-only`):
 
 ```bash
-./scripts/install-agentic-os-systemd.sh --dashboard-only --skip-skills
+# CURSOR_API_KEY in ~/.cursor/agentic-os.env  OR  agent login
+./scripts/install-agentic-os-systemd.sh --skip-skills
+./scripts/check-agent-auth.sh
 ```
 
 ---
@@ -206,10 +208,10 @@ Reload Cursor after `mcp.json` / hooks changes.
 ```bash
 ~/start-ai-brain.sh
 cd /home/travis/Github/my_ai_brain && ./scripts/verify-travis-fedora.sh
-cd /home/travis/Github/agentic-os-dashboard && ./scripts/health-check-travis-fedora.sh --quick
+cd /home/travis/Github/agentic-os-dashboard && ./scripts/health-check-travis-fedora.sh
 ```
 
-`MEMORY_BACKEND=open-brain` is expected: dashboard `/api/memory/user-model` **503** is a **pass**.
+`MEMORY_BACKEND=open-brain` is expected: dashboard `/api/memory/user-model` **503** is a **pass**. Prefer the **full** health check (not `--quick` alone) — `--quick` skips runner/auth and can look healthy while RUNs stick.
 
 After sleep: **Reload Window** in Cursor (no sleepwatcher on Linux).
 
@@ -248,6 +250,6 @@ Always-on Mac + Fedora: **[DAILY-CHECKLIST.md](DAILY-CHECKLIST.md)**.
 | Leaving Fedora | `~/Github/my_ai_brain/scripts/brain-sync.sh push` |
 | Arriving | Wait for LiveSync, then `brain-sync.sh pull` and `status` |
 | After reboot only | `~/start-ai-brain.sh` |
-| Health (if something is down) | `~/Github/agentic-os-dashboard/scripts/health-check-travis-fedora.sh --quick` |
+| Health (if something is down) | `~/Github/agentic-os-dashboard/scripts/health-check-travis-fedora.sh` (full check) |
 
 Apple `backup.sh` is a **legacy dump** — do not use it as the multi-machine sync on Fedora.
